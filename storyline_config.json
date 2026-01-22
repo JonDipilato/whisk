@@ -1,0 +1,74 @@
+{
+  "001": {
+    "image_path": "output\\scene_001_batch_1\\scene_1_20260112_133946_4.png",
+    "motion_prompt": "Gentle camera movement showing scene 001, peaceful storytelling moment"
+  },
+  "002": {
+    "image_path": "output\\scene_002_batch_1\\scene_2_20260112_125303_7.png",
+    "motion_prompt": "Gentle camera movement showing scene 002, peaceful storytelling moment"
+  },
+  "003": {
+    "image_path": "output\\scene_003_batch_1\\scene_3_20260112_125423_8.png",
+    "motion_prompt": "Gentle camera movement showing scene 003, peaceful storytelling moment"
+  },
+  "004": {
+    "image_path": "output\\scene_004_batch_1\\scene_4_20260114_135520_3.png",
+    "motion_prompt": "Gentle camera movement showing scene 004, peaceful storytelling moment"
+  },
+  "005": {
+    "image_path": "output\\scene_005_batch_1\\scene_5_20260112_125656_8.png",
+    "motion_prompt": "Gentle camera movement showing scene 005, peaceful storytelling moment"
+  },
+  "101": {
+    "image_path": "output\\scene_101_batch_1\\scene_101_20260114_141309_3.png",
+    "motion_prompt": "Gentle camera movement showing scene 101, peaceful storytelling moment"
+  },
+  "102": {
+    "image_path": "output\\scene_102_batch_1\\scene_102_20260114_140741_5.png",
+    "motion_prompt": "Gentle camera movement showing scene 102, peaceful storytelling moment"
+  },
+  "103": {
+    "image_path": "output\\scene_103_batch_1\\scene_103_20260114_140902_5.png",
+    "motion_prompt": "Gentle camera movement showing scene 103, peaceful storytelling moment"
+  },
+  "200": {
+    "image_path": "output\\scene_200_batch_1\\scene_200_20260114_145355_3.png",
+    "motion_prompt": "Gentle camera movement showing scene 200, peaceful storytelling moment"
+  },
+  "301": {
+    "image_path": "output\\scene_301_batch_1\\scene_301_20260114_204502_6.png",
+    "motion_prompt": "Camera slowly zooms in slightly on narrator and grandmother sharing tea, warm afternoon light shifts through curtains, intimate peaceful moment"
+  },
+  "302": {
+    "image_path": "output\\scene_302_batch_1\\scene_302_20260114_204653_6.png",
+    "motion_prompt": "Camera follows grandmother's gentle hand movement as she pours tea, steam rises gracefully from cups, tender nurturing moment"
+  },
+  "303": {
+    "image_path": "output\\scene_303_batch_1\\scene_303_20260114_204845_5.png",
+    "motion_prompt": "Camera pans left to right as both stand up from table, natural smooth movement toward door, anticipation of outdoor adventure"
+  },
+  "304": {
+    "image_path": "output\\scene_304_batch_1\\scene_304_20260114_150807_6.png",
+    "motion_prompt": "Camera slowly pulls back to reveal colorful garden surrounding them, gentle breeze makes flowers sway, peaceful outdoor serenity"
+  },
+  "305": {
+    "image_path": "output\\scene_305_batch_1\\scene_305_20260114_151031_6.png",
+    "motion_prompt": "Camera tracks grandmother bending down to show flower, narrator follows with curiosity, warm connection between generations"
+  },
+  "306": {
+    "image_path": "output\\scene_306_batch_1\\scene_306_20260114_151404_5.png",
+    "motion_prompt": "Camera tracks from side as they stroll along garden path, trees provide dappled shade, leisurely contemplative pace"
+  },
+  "307": {
+    "image_path": "output\\scene_307_batch_1\\scene_307_20260114_151710_5.png",
+    "motion_prompt": "Camera follows from behind as they walk onto quiet street, suburban houses pass by, neighborhood exploration feeling"
+  },
+  "308": {
+    "image_path": "output\\scene_308_batch_1\\scene_308_20260114_193858_6.png",
+    "motion_prompt": "Camera circles around grandmother pointing out interesting sights, narrator looks with wonder, shared discovery moment"
+  },
+  "310": {
+    "image_path": "output\\scene_310_batch_1\\scene_310_20260114_205039_6.png",
+    "motion_prompt": "Camera reveals beautiful sunlit garden with colorful flowers and trees, blue sky overhead, sense of peaceful outdoor sanctuary"
+  }
+}

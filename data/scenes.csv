@@ -1,0 +1,5 @@
+scene_id,environment_id,character_ids,prompt
+1,env_forest,,A magical enchanted forest with golden sunlight streaming through ancient trees and mystical atmosphere
+2,env_forest,char_girl,A curious young girl exploring a mystical forest discovering glowing butterflies and hidden wonders
+3,env_room,char_grandma,A warm cozy grandmother sitting by a fireplace knitting with a gentle loving smile
+4,env_room,"char_girl,char_grandma",Grandmother and granddaughter sharing a tender moment reading a storybook together by warm firelight

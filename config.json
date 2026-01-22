@@ -1,0 +1,25 @@
+{
+  "whisk_url": "https://labs.google/fx/tools/whisk/project",
+  "browser": {
+    "headless": false,
+    "slow_mo": 100,
+    "user_data_dir": "C:\\\\Users\\\\jon-d\\\\AppData\\\\Local\\\\Google\\\\Chrome\\\\User Data_Automation"
+  },
+  "paths": {
+    "environments": "./data/environments",
+    "characters": "./data/characters",
+    "output": "./output",
+    "scenes_file": "./data/scenes.csv"
+  },
+  "generation": {
+    "images_per_prompt": 4,
+    "batches_per_scene": 2,
+    "image_format": "landscape",
+    "download_timeout": 60
+  },
+  "queue": {
+    "retry_on_failure": true,
+    "max_retries": 3,
+    "delay_between_scenes": 5
+  }
+}
