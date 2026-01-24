@@ -1,0 +1,85 @@
+{
+  "output_settings": {
+    "resolution": [1920, 1080],
+    "fps": 24,
+    "duration_per_image": 4.0,
+    "transition_duration": 0.5,
+    "codec": "libx264",
+    "crf": 23,
+    "audio_codec": "aac",
+    "output_directory": "./output/videos"
+  },
+  "audio": {
+    "tts_voice": "en-US-AriaNeural",
+    "voice_rate": "+0%",
+    "voice_volume": "+0%",
+    "music_volume": 0.25,
+    "asmr_music_volume": 0.40,
+    "music_library": "./assets/music",
+    "fade_in_duration": 0.5,
+    "fade_out_duration": 1.0
+  },
+  "youtube": {
+    "channel_name": "Peaceful Stories",
+    "channel_handle": "peacefulstories",
+    "upload_schedule": "Tuesday & Friday",
+    "default_tags": [
+      "bedtime stories for kids",
+      "animated stories",
+      "ghibli style stories",
+      "calming stories for sleep"
+    ],
+    "default_category": "Education",
+    "default_privacy": "public"
+  },
+  "content_strategy": {
+    "target_video_length_start": 300,
+    "target_video_length_goal": 600,
+    "seconds_per_scene": 4,
+    "scenes_per_video_start": 75,
+    "scenes_per_video_goal": 150,
+    "upload_frequency": "3x_per_week",
+    "target_ctr": 5.0,
+    "target_retention_60s": 50.0,
+    "target_completion": 50.0
+  },
+  "music_sources": {
+    "pixabay_enabled": true,
+    "pixabay_api_key": "",
+    "suno_ai_enabled": false,
+    "suno_ai_api_key": "",
+    "local_library": "./assets/music",
+    "default_categories": ["ambient", "calm", "upbeat", "dramatic"]
+  },
+  "title_formulas": [
+    "{character_name}'s {theme} Adventure | {style} Bedtime Story for Kids",
+    "This {style} Story Will Help Your Child Sleep | {character_name}",
+    "{number} {theme} Stories for Kids | {style} Animation"
+  ],
+  "style_presets": {
+    "ghibli": {
+      "name": "Ghibli Style",
+      "description": "Studio Ghibli inspired bedtime stories",
+      "default_music": "calm",
+      "tag_suffix": "ghibli style"
+    },
+    "pixar": {
+      "name": "Pixar Style",
+      "description": "Pixar inspired animated stories",
+      "default_music": "upbeat",
+      "tag_suffix": "pixar style"
+    },
+    "watercolor": {
+      "name": "Watercolor",
+      "description": "Gentle watercolor illustration style",
+      "default_music": "ambient",
+      "tag_suffix": "watercolor stories"
+    },
+    "storybook": {
+      "name": "Storybook",
+      "description": "Classic storybook illustration style",
+      "default_music": "calm",
+      "tag_suffix": "storybook stories"
+    }
+  }
+}

@@ -25,6 +25,10 @@ queue_state.json
 .DS_Store
 Thumbs.db
 
+# Local notes and Chrome automation profile
+.notes/
+C:\\Users\\*
+
 # Logs
 logs/
 *.log

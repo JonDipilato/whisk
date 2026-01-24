@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "tracks": {
+    "ambient_bedtime": {
+      "path": "assets/music/calm/ambient_bedtime.wav",
+      "name": "ambient_bedtime",
+      "category": "calm",
+      "duration": 0.0,
+      "artist": "",
+      "url": "",
+      "tags": []
+    }
+  }
+}

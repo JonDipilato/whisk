@@ -183,16 +183,29 @@ class WhiskController:
 
         # Initialize driver
         if self.is_wsl:
-            # For WSL, we need Windows chromedriver with Windows-style path
+            # WSL can execute Windows .exe directly using /mnt/c/ paths
             console.print("[cyan]Running from WSL - using Windows ChromeDriver[/cyan]")
 
-            # Windows-style path for chromedriver
-            win_chromedriver = "C:\\Users\\jon-d\\.wdm\\drivers\\chromedriver\\win64\\143.0.7499.192\\chromedriver.exe"
-            wsl_check_path = "/mnt/c/Users/jon-d/.wdm/drivers/chromedriver/win64/143.0.7499.192/chromedriver.exe"
+            # Set Chrome binary location (Windows path for ChromeDriver which runs as Windows process)
+            chrome_binary = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+            options.binary_location = chrome_binary
 
-            if os.path.exists(wsl_check_path):
-                console.print(f"[cyan]Using ChromeDriver: {win_chromedriver}[/cyan]")
-                service = Service(win_chromedriver)
+            # Find latest chromedriver version dynamically
+            wdm_base = Path("/mnt/c/Users/jon-d/.wdm/drivers/chromedriver/win64")
+            chromedriver_path = None
+
+            if wdm_base.exists():
+                versions = sorted(wdm_base.iterdir(), reverse=True)
+                for version_dir in versions:
+                    candidates = list(version_dir.rglob("chromedriver.exe"))
+                    if candidates:
+                        # Use WSL path directly - WSL can execute Windows binaries
+                        chromedriver_path = str(candidates[0])
+                        break
+
+            if chromedriver_path:
+                console.print(f"[cyan]Using ChromeDriver: {chromedriver_path}[/cyan]")
+                service = Service(executable_path=chromedriver_path)
                 self.driver = webdriver.Chrome(service=service, options=options)
             else:
                 # Try without service - let Selenium find it
@@ -606,7 +619,7 @@ class WhiskController:
             console.print(f"[red]Error waiting for generation: {e}[/red]")
             return False
 
-    def download_images(self, output_folder: Path, prefix: str = "image") -> list[Path]:
+    def download_images(self, output_folder: Path, prefix: str = "image", crop: bool = True) -> list[Path]:
         """Download generated images using Whisk's DOWNLOAD ALL IMAGES button.
 
         Whisk downloads images as a ZIP file (whisk_images.zip), so we need to:
@@ -690,7 +703,7 @@ class WhiskController:
 
             if not download_clicked:
                 console.print("[yellow]Could not find download button - trying fallback[/yellow]")
-                return self._download_images_fallback(output_folder, prefix)
+                return self._download_images_fallback(output_folder, prefix, crop=crop)
 
             # Wait for download to complete
             console.print("[cyan]Waiting for ZIP download to complete...[/cyan]")
@@ -787,7 +800,7 @@ class WhiskController:
             console.print(f"[red]Error downloading images: {e}[/red]")
             return downloaded
 
-    def _download_images_fallback(self, output_folder: Path, prefix: str) -> list[Path]:
+    def _download_images_fallback(self, output_folder: Path, prefix: str, crop: bool = True) -> list[Path]:
         """Fallback: Screenshot the generated images directly.
 
         Strategy: Whisk generates 4 result images. We capture ALL candidates, filter by size,
@@ -866,7 +879,8 @@ class WhiskController:
                 size_kb = file_size // 1024
                 console.print(f"[green]Downloaded: {filepath.name} ({size_kb}KB)[/green]")
                 # Auto-crop any black/white letterbox bars
-                crop_letterboxing(filepath)
+                if crop:
+                    crop_letterboxing(filepath)
 
             if not downloaded:
                 console.print("[yellow]No large generated images found in fallback[/yellow]")

@@ -94,3 +94,72 @@ class GenerationResult(BaseModel):
     output_paths: list[str] = Field(default_factory=list)
     error_message: Optional[str] = None
     duration_seconds: float = 0.0
+
+
+class AudioVersionType(str, Enum):
+    """Audio output version types."""
+    NARRATED = "narrated"
+    ASMR = "asmr"
+
+
+class VideoProject(BaseModel):
+    """A video project containing scenes and metadata."""
+    project_id: str = Field(..., description="Unique project identifier")
+    title: str = Field(..., description="Video title")
+    scenes: list[Scene] = Field(default_factory=list)
+    style_preset: str = "ghibli"
+    character_name: str = "Grandmother"
+    theme: str = "Garden Adventure"
+    narration_script: Optional[str] = None
+    output_path: Optional[str] = None
+    video_paths: dict[str, str] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+class AudioTrack(BaseModel):
+    """Audio track metadata."""
+    path: str
+    duration: float
+    type: str
+    volume: float = 1.0
+
+
+class VideoMetadata(BaseModel):
+    """YouTube video metadata."""
+    title: str
+    description: str
+    tags: list[str]
+    category: str = "Education"
+    privacy_status: str = "public"
+    thumbnail_path: Optional[str] = None
+    chapter_timestamps: dict[str, str] = Field(default_factory=dict)
+
+
+class Chapter(BaseModel):
+    """A chapter/scene in the video."""
+    title: str
+    start_time: float
+    end_time: float
+    narration: Optional[str] = None
+    image_count: int = 1
+
+
+class StylePreset(BaseModel):
+    """Visual style preset for video generation."""
+    id: str
+    name: str
+    description: str
+    default_music: str = "calm"
+    tag_suffix: str = ""
+
+
+class VideoConfig(BaseModel):
+    """Configuration for video generation."""
+    duration_per_image: float = 4.0
+    transition_duration: float = 0.5
+    resolution: tuple[int, int] = (1920, 1080)
+    fps: int = 24
+    codec: str = "libx264"
+    crf: int = 23
+    audio_codec: str = "aac"
+    generate_both_versions: bool = True

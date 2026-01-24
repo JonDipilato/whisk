@@ -12,14 +12,23 @@ Usage:
 """
 
 from pathlib import Path
+from datetime import datetime
 import click
 from rich.console import Console
+from rich.panel import Panel
 from selenium.webdriver.common.by import By
 
 from src.config import load_config, save_config, AppConfig
 from src.models import Scene, ImageFormat
 from src.queue_manager import QueueManager, create_sample_csv
 from src.whisk_controller import test_whisk_connection, WhiskController
+
+# Video pipeline imports
+from src.video_assembler import VideoAssembler, create_video_from_output, create_video_from_scenes
+from src.audio_generator import AudioGenerator, list_available_voices
+from src.youtube_metadata import YouTubeMetadataGenerator, generate_metadata_package
+from src.pipeline import VideoPipeline, PipelineConfig, run_pipeline_from_output
+from src.music_library import MusicLibrary, setup_music_library, MusicCategory
 
 console = Console()
 
@@ -325,6 +334,373 @@ def _interactive_mode(config: AppConfig):
 
     finally:
         controller.stop()
+
+
+# ============================================
+# Video Generation Commands
+# ============================================
+
+@cli.command("create-video")
+@click.option("--scenes", required=True, help="Scene folder path or 'all' for output directory")
+@click.option("--output", "-o", help="Output video path")
+@click.option("--duration", "-d", type=float, default=4.0, help="Seconds per image")
+@click.option("--images", "-i", type=int, default=1, help="Images per scene")
+@click.option("--no-transitions", is_flag=True, help="Disable fade transitions")
+@click.pass_context
+def create_video(ctx, scenes, output, duration, images, no_transitions):
+    """Assemble images into video."""
+    config = ctx.obj["config"]
+
+    console.print("[bold cyan]Creating video from images...[/bold cyan]")
+
+    # Determine source path
+    if scenes.lower() == "all":
+        source_dir = Path(config.paths.output)
+    else:
+        source_dir = Path(scenes)
+
+    if not source_dir.exists():
+        console.print(f"[red]Error: Source directory not found: {source_dir}[/red]")
+        return
+
+    # Determine output path
+    if output is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output = Path(config.paths.videos) / f"video_{timestamp}.mp4"
+    else:
+        output = Path(output)
+
+    try:
+        assembler = VideoAssembler(config)
+
+        if scenes.lower() == "all":
+            video_path, segments = assembler.create_video_from_output_directory(
+                output_dir=source_dir,
+                output_path=output,
+                images_per_scene=images,
+                duration_per_image=duration,
+                add_transitions=not no_transitions,
+            )
+        else:
+            # Single scene or directory
+            video_path, segments = assembler.create_video_from_scenes(
+                scene_folders=[source_dir],
+                output_path=output,
+                images_per_scene=images,
+                duration_per_image=duration,
+                add_transitions=not no_transitions,
+            )
+
+        # Show video info
+        info = assembler.get_video_info(video_path)
+        console.print(f"\n[green]Video created successfully![/green]")
+        console.print(f"  Path: {video_path}")
+        console.print(f"  Duration: {info['duration']:.1f}s")
+        console.print(f"  Size: {info['size'][0]}x{info['size'][1]}")
+        console.print(f"  Scenes: {len(segments)}")
+
+    except Exception as e:
+        console.print(f"[red]Error creating video: {e}[/red]")
+        import traceback
+        console.print(traceback.format_exc())
+
+
+@cli.command("full-pipeline")
+@click.option("--scenes", required=True, help="Scene folder path or 'all' for output directory")
+@click.option("--character", default="Grandmother", help="Main character name")
+@click.option("--theme", default="Garden Adventure", help="Story theme")
+@click.option("--style", default="ghibli", help="Visual style (ghibli, pixar, watercolor, storybook)")
+@click.option("--narration", "-n", help="Full narration text for TTS")
+@click.option("--narration-file", type=click.Path(exists=True), help="File containing narration text")
+@click.option("--music", "-m", type=click.Path(exists=True), help="Background music file path")
+@click.option("--music-category", default="calm", help="Music category (ambient, calm, upbeat, dramatic)")
+@click.option("--voice", default="aria", help="TTS voice (aria, guy, jenny, etc.)")
+@click.option("--images", "-i", type=int, default=1, help="Images per scene")
+@click.option("--duration", "-d", type=float, default=4.0, help="Seconds per image")
+@click.option("--title", help="Custom video title")
+@click.option("--summary", help="Story summary for metadata")
+@click.option("--lesson", help="Lesson learned for metadata")
+@click.option("--project-id", help="Custom project ID")
+@click.option("--asmr-only", is_flag=True, help="Generate only ASMR version (no narration)")
+@click.option("--narrated-only", is_flag=True, help="Generate only narrated version")
+@click.pass_context
+def full_pipeline(ctx, scenes, character, theme, style, narration, narration_file,
+                  music, music_category, voice, images, duration, title, summary,
+                  lesson, project_id, asmr_only, narrated_only):
+    """Run complete video generation pipeline."""
+    config = ctx.obj["config"]
+
+    console.print("[bold cyan]Running Full Video Pipeline[/bold cyan]")
+
+    # Load narration from file if provided
+    if narration_file:
+        with open(narration_file, "r") as f:
+            narration = f.read()
+
+    # Determine source path
+    if scenes.lower() == "all":
+        source_dir = Path(config.paths.output)
+    else:
+        source_dir = Path(scenes)
+
+    if not source_dir.exists():
+        console.print(f"[red]Error: Source directory not found: {source_dir}[/red]")
+        return
+
+    # Get scene folders
+    scene_folders = sorted([
+        f for f in source_dir.iterdir()
+        if f.is_dir() and f.name.startswith("scene_")
+    ])
+    if not scene_folders and source_dir.is_dir():
+        # If no scene_* subdirs found, use the directory itself
+        scene_folders = [source_dir]
+
+    if not scene_folders:
+        console.print(f"[red]Error: No scene folders found[/red]")
+        return
+
+    console.print(f"Found {len(scene_folders)} scene folders")
+
+    # Create pipeline config
+    pipeline_config = PipelineConfig(
+        character_name=character,
+        theme=theme,
+        style=style,
+        narration_text=narration,
+        music_path=Path(music) if music else None,
+        music_category=music_category,
+        voice=voice,
+        images_per_scene=images,
+        duration_per_image=duration,
+        custom_title=title,
+        summary=summary,
+        lesson=lesson,
+        generate_both_versions=not (asmr_only or narrated_only),
+    )
+
+    # Run pipeline
+    pipeline = VideoPipeline(config)
+    result = pipeline.run_full_pipeline(
+        image_folders=scene_folders,
+        pipeline_config=pipeline_config,
+        project_id=project_id,
+    )
+
+    # Print final status
+    if result.success:
+        console.print(f"\n[bold green]Pipeline Complete![/bold green]")
+        console.print(f"Project ID: {result.project_id}")
+        console.print(f"Video duration: {result.duration:.1f}s")
+        console.print(f"Generation time: {result.generation_time_seconds / 60:.1f} minutes")
+    else:
+        console.print(f"\n[red]Pipeline Failed:[/red] {result.error_message}")
+
+
+@cli.command("generate-audio")
+@click.option("--text", "-t", required=True, help="Text to convert to speech")
+@click.option("--output", "-o", required=True, help="Output audio file path")
+@click.option("--voice", default="aria", help="TTS voice (aria, guy, jenny, etc.)")
+@click.option("--list-voices", is_flag=True, help="List available voices")
+@click.pass_context
+def generate_audio(ctx, text, output, voice, list_voices):
+    """Generate text-to-speech audio."""
+    if list_voices:
+        console.print("[bold cyan]Available TTS Voices:[/bold cyan]")
+        for name, voice_id in list_available_voices().items():
+            console.print(f"  {name}: {voice_id}")
+        return
+
+    config = ctx.obj["config"]
+    generator = AudioGenerator(config)
+
+    console.print(f"[cyan]Generating TTS audio...[/cyan]")
+
+    try:
+        result = generator.text_to_speech(
+            text=text,
+            output_path=Path(output),
+            voice=voice,
+        )
+        console.print(f"[green]Audio saved: {result}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error generating audio: {e}[/red]")
+
+
+@cli.command("mix-audio")
+@click.option("--narration", "-n", type=click.Path(exists=True), help="Narration audio file")
+@click.option("--music", "-m", type=click.Path(exists=True), required=True, help="Background music file")
+@click.option("--output", "-o", required=True, help="Output audio file path")
+@click.option("--music-volume", type=float, default=0.25, help="Music volume (0-1)")
+@click.option("--fade-in", type=float, default=0.5, help="Fade in duration (seconds)")
+@click.option("--fade-out", type=float, default=1.0, help="Fade out duration (seconds)")
+@click.pass_context
+def mix_audio(ctx, narration, music, output, music_volume, fade_in, fade_out):
+    """Mix narration and background music."""
+    config = ctx.obj["config"]
+    generator = AudioGenerator(config)
+
+    console.print(f"[cyan]Mixing audio...[/cyan]")
+
+    try:
+        result = generator.create_audio_mix(
+            narration_path=Path(narration) if narration else None,
+            music_path=Path(music),
+            output_path=Path(output),
+            music_volume=music_volume,
+            fade_in=fade_in,
+            fade_out=fade_out,
+        )
+        console.print(f"[green]Audio mix saved: {result}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error mixing audio: {e}[/red]")
+
+
+@cli.command("generate-metadata")
+@click.option("--character", default="Grandmother", help="Main character name")
+@click.option("--theme", default="Garden Adventure", help="Story theme")
+@click.option("--style", default="ghibli", help="Visual style")
+@click.option("--title", help="Custom video title")
+@click.option("--summary", help="Story summary")
+@click.option("--lesson", help="Lesson learned")
+@click.option("--output", "-o", help="Output metadata file path")
+@click.pass_context
+def generate_metadata_cmd(ctx, character, theme, style, title, summary, lesson, output):
+    """Generate YouTube metadata (title, description, tags)."""
+    config = ctx.obj["config"]
+    generator = YouTubeMetadataGenerator(config)
+
+    console.print("[cyan]Generating YouTube metadata...[/cyan]")
+
+    metadata = generator.generate_all_metadata(
+        character_name=character,
+        theme=theme,
+        style=style,
+        custom_title=title,
+        summary=summary,
+        lesson=lesson,
+    )
+
+    generator.print_metadata_preview(metadata)
+
+    if output:
+        generator.save_metadata(metadata, Path(output))
+        console.print(f"\n[green]Metadata saved to: {output}[/green]")
+
+
+@cli.command("music-library")
+@click.option("--scan", is_flag=True, help="Scan library for new tracks")
+@click.option("--list", "list_category", help="List tracks in category")
+@click.option("--setup", is_flag=True, help="Create library directory structure")
+@click.pass_context
+def music_library_cmd(ctx, scan, list_category, setup):
+    """Manage music library."""
+    config = ctx.obj["config"]
+    library = setup_music_library(config=config)
+
+    if setup:
+        library.ensure_directories()
+        console.print(f"[green]Library ready at: {library.library_path}[/green]")
+        return
+
+    if scan:
+        count = library._scan_library()
+        console.print(f"[green]Found {count} new tracks[/green]")
+
+    if list_category:
+        tracks = library.list_tracks(MusicCategory(list_category) if list_category != "all" else None)
+        console.print(f"\n[bold]Tracks ({len(tracks)}):[/bold]")
+        for track in tracks:
+            console.print(f"  {track.name} ({track.category.value}) - {track.duration:.1f}s")
+
+    library.print_library_status()
+
+
+@cli.command("video-info")
+@click.argument("video_path", type=click.Path(exists=True))
+@click.pass_context
+def video_info_cmd(ctx, video_path):
+    """Get information about a video file."""
+    config = ctx.obj["config"]
+    assembler = VideoAssembler(config)
+
+    try:
+        info = assembler.get_video_info(Path(video_path))
+
+        console.print(f"\n[bold cyan]Video Information[/bold cyan]\n")
+        console.print(f"Path: {info['path']}")
+        console.print(f"Duration: {info['duration']:.1f} seconds ({info['duration']/60:.1f} minutes)")
+        console.print(f"Size: {info['size'][0]}x{info['size'][1]}")
+        console.print(f"FPS: {info['fps']}")
+        console.print(f"Has Audio: {info['has_audio']}")
+
+    except Exception as e:
+        console.print(f"[red]Error reading video: {e}[/red]")
+
+
+@cli.command("export-youtube")
+@click.argument("video_path", type=click.Path(exists=True))
+@click.option("--output", "-o", help="Output path (default: adds _youtube suffix)")
+@click.pass_context
+def export_youtube_cmd(ctx, video_path, output):
+    """Export video with YouTube-optimized settings."""
+    config = ctx.obj["config"]
+    assembler = VideoAssembler(config)
+
+    console.print("[cyan]Exporting for YouTube...[/cyan]")
+
+    try:
+        result = assembler.export_for_youtube(
+            video_path=Path(video_path),
+            output_path=Path(output) if output else None,
+        )
+        console.print(f"[green]YouTube-ready video: {result}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error exporting video: {e}[/red]")
+
+
+@cli.command("master")
+@click.option("--story", default="grandmother_garden", help="Story name to create")
+@click.option("--project-id", help="Custom project ID")
+@click.option("--skip-generation", is_flag=True, help="Skip image generation (use existing images)")
+@click.pass_context
+def master_cmd(ctx, story, project_id, skip_generation):
+    """MASTER AUTOMATION - One command for everything.
+
+    This single command does the ENTIRE pipeline:
+      1. Queues all story scenes
+      2. Generates images via Whisk
+      3. Creates video from images
+      4. Generates TTS narration
+      5. Mixes with background music
+      6. Generates YouTube metadata
+      7. Exports final video
+
+    Example:
+        python run.py master
+    """
+    config = ctx.obj["config"]
+
+    console.print(Panel(
+        "[bold magenta]🎬 MASTER AUTOMATION[/bold magenta]\n"
+        "One command to create a complete YouTube-ready video",
+        title="Full Pipeline"
+    ))
+
+    import subprocess
+    import sys
+
+    # Run the master automation script
+    cmd = [sys.executable, "master_automation.py"]
+    if story:
+        cmd.extend(["--story", story])
+    if project_id:
+        cmd.extend(["--project-id", project_id])
+    if skip_generation:
+        cmd.extend(["--only", "video"])
+
+    console.print(f"[cyan]Running: {' '.join(cmd)}[/cyan]")
+    subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":
