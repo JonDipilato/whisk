@@ -547,7 +547,7 @@ class WhiskController:
             console.print(f"[red]Error starting generation: {e}[/red]")
             return False
 
-    def wait_for_generation(self, timeout: int = 60) -> bool:
+    def wait_for_generation(self, timeout: int = 30) -> bool:
         """Wait for image generation to complete."""
         try:
             console.print(f"[cyan]Waiting for generation (max {timeout}s)...[/cyan]")
@@ -578,10 +578,9 @@ class WhiskController:
                 console.print("[yellow]Could not detect generation start - waiting anyway...[/yellow]")
 
             # Now wait for generation to complete
-            # AI image generation typically takes 20-60 seconds, so we need a substantial minimum wait
-            console.print("[cyan]Waiting for AI generation (this takes 30-60 seconds)...[/cyan]")
+            console.print("[cyan]Waiting for AI generation (this takes ~10-30 seconds)...[/cyan]")
             wait_start = datetime.now()
-            min_wait_secs = 30  # Minimum time to wait for AI generation
+            min_wait_secs = max(5, min(10, timeout // 3))  # Minimum time to wait for AI generation
 
             while (datetime.now() - start_time).seconds < timeout:
                 waited_secs = (datetime.now() - wait_start).seconds

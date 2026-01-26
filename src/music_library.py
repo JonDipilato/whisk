@@ -213,6 +213,35 @@ class MusicLibrary:
 
         return results
 
+    def get_track_for_episode(
+        self,
+        episode_num: int = 0,
+        seed: int = 0,
+        category: Optional[MusicCategory] = None,
+    ) -> Optional[MusicTrack]:
+        """Get a deterministic track based on episode number for auto-rotation.
+
+        Each episode gets a different track, cycling through available tracks.
+
+        Args:
+            episode_num: Episode number for rotation.
+            seed: Additional seed for variety.
+            category: Optional category filter.
+
+        Returns:
+            Selected track or None if library is empty.
+        """
+        tracks = self.find_tracks(category=category)
+        if not tracks:
+            return None
+
+        # Sort tracks by name for deterministic ordering
+        tracks.sort(key=lambda t: t.name)
+
+        # Use episode number to pick a track, cycling through available tracks
+        index = (episode_num + seed) % len(tracks)
+        return tracks[index]
+
     def get_random_track(self, category: Optional[MusicCategory] = None) -> Optional[MusicTrack]:
         """Get a random track from the library.
 
@@ -362,54 +391,146 @@ class PixabayMusicClient:
     """Client for downloading royalty-free music from Pixabay."""
 
     BASE_URL = "https://pixabay.com/api/"
-    MUSIC_URL = "https://pixabay.com/music/search/"
 
     def __init__(self, api_key: str = ""):
-        """Initialize the Pixabay client.
-
-        Args:
-            api_key: Pixabay API key (optional for browsing).
-        """
         self.api_key = api_key
-
         if not REQUESTS_AVAILABLE:
-            console.print("[yellow]Warning: requests not installed. Install with: pip install requests[/yellow]")
+            console.print("[yellow]Warning: requests not installed. Run: pip install requests[/yellow]")
 
     def search_music(
         self,
-        query: str = "ambient",
-        category: Optional[str] = None,
-        duration_min: Optional[int] = None,
-        duration_max: Optional[int] = None,
+        query: str = "ambient calm",
+        per_page: int = 10,
     ) -> List[Dict]:
-        """Search for music on Pixabay.
+        """Search for music tracks via Pixabay API.
 
-        Note: This requires a browser scraper as Pixabay doesn't have a public API for music.
-        This is a placeholder for future implementation.
+        Args:
+            query: Search query (e.g. 'ambient calm relaxing').
+            per_page: Number of results per page (max 200).
+
+        Returns:
+            List of track metadata dicts with 'id', 'title', 'url', 'duration', 'tags'.
+        """
+        if not self.api_key:
+            console.print("[red]Pixabay API key required. Get one free at: https://pixabay.com/api/docs/[/red]")
+            return []
+
+        if not REQUESTS_AVAILABLE:
+            console.print("[red]requests library required. Run: pip install requests[/red]")
+            return []
+
+        params = {
+            "key": self.api_key,
+            "q": query,
+            "per_page": min(per_page, 200),
+        }
+
+        try:
+            resp = requests.get(self.BASE_URL, params=params, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+
+            results = []
+            for hit in data.get("hits", []):
+                results.append({
+                    "id": hit.get("id"),
+                    "title": hit.get("tags", "untitled").split(",")[0].strip(),
+                    "url": hit.get("previewURL") or hit.get("webformatURL") or hit.get("largeImageURL"),
+                    "duration": hit.get("duration", 0),
+                    "tags": hit.get("tags", ""),
+                    "user": hit.get("user", ""),
+                    "pageURL": hit.get("pageURL", ""),
+                })
+            return results
+
+        except Exception as e:
+            console.print(f"[red]Pixabay API error: {e}[/red]")
+            return []
+
+    def download_track(self, url: str, output_path: Path) -> bool:
+        """Download a track from a direct URL.
+
+        Args:
+            url: Direct download URL for the audio file.
+            output_path: Where to save the file.
+
+        Returns:
+            True if download succeeded.
+        """
+        if not REQUESTS_AVAILABLE:
+            console.print("[red]requests library required. Run: pip install requests[/red]")
+            return False
+
+        try:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            resp = requests.get(url, stream=True, timeout=60)
+            resp.raise_for_status()
+
+            total = int(resp.headers.get("content-length", 0))
+            with open(output_path, "wb") as f:
+                downloaded = 0
+                for chunk in resp.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    downloaded += len(chunk)
+
+            if output_path.exists() and output_path.stat().st_size > 10000:
+                console.print(f"[green]Downloaded: {output_path.name} ({output_path.stat().st_size // 1024}KB)[/green]")
+                return True
+            else:
+                console.print(f"[red]Download too small or failed: {output_path.name}[/red]")
+                return False
+
+        except Exception as e:
+            console.print(f"[red]Download error: {e}[/red]")
+            return False
+
+    def download_batch(
+        self,
+        query: str,
+        output_dir: Path,
+        category: MusicCategory = MusicCategory.CALM,
+        count: int = 10,
+    ) -> List[Path]:
+        """Search and download multiple tracks.
 
         Args:
             query: Search query.
-            category: Music category.
-            duration_min: Minimum duration in seconds.
-            duration_max: Maximum duration in seconds.
+            output_dir: Directory to save files.
+            category: Category to organize under.
+            count: Number of tracks to download.
 
         Returns:
-            List of track metadata.
+            List of downloaded file paths.
         """
-        console.print("[yellow]Pixabay music search requires web scraping.[/yellow]")
-        console.print("[yellow]Please download music manually from: https://pixabay.com/music/[/yellow]")
-        return []
+        results = self.search_music(query=query, per_page=count)
+        if not results:
+            console.print("[yellow]No results found. Try a different query.[/yellow]")
+            return []
 
-    def get_download_url(self, track_id: str) -> Optional[str]:
-        """Get download URL for a track (placeholder).
+        category_dir = output_dir / category.value
+        category_dir.mkdir(parents=True, exist_ok=True)
 
-        Args:
-            track_id: Pixabay track ID.
+        downloaded = []
+        for track in results:
+            url = track.get("url")
+            if not url:
+                continue
 
-        Returns:
-            Download URL or None.
-        """
-        return None
+            title = track["title"].lower().replace(" ", "_").replace("/", "_")[:40]
+            track_id = track.get("id", "unknown")
+            ext = Path(url).suffix or ".mp3"
+            filename = f"{title}_{track_id}{ext}"
+            output_path = category_dir / filename
+
+            if output_path.exists() and output_path.stat().st_size > 10000:
+                console.print(f"[dim]Already exists: {filename}[/dim]")
+                downloaded.append(output_path)
+                continue
+
+            if self.download_track(url, output_path):
+                downloaded.append(output_path)
+
+        return downloaded
 
 
 class SunoAIClient:
@@ -472,22 +593,33 @@ def setup_music_library(
 
 def download_free_music(
     output_dir: Path,
-    category: MusicCategory = MusicCategory.AMBIENT,
+    api_key: str = "",
+    query: str = "ambient calm relaxing",
+    count: int = 10,
+    category: MusicCategory = MusicCategory.CALM,
 ) -> List[Path]:
-    """Download free royalty-free music (placeholder for future implementation).
+    """Download royalty-free music from Pixabay.
 
     Args:
         output_dir: Output directory for downloads.
-        category: Music category to download.
+        api_key: Pixabay API key.
+        query: Search query.
+        count: Number of tracks to download.
+        category: Music category to organize under.
 
     Returns:
         List of downloaded file paths.
     """
-    console.print("[yellow]Automatic music download requires API integration.[/yellow]")
-    console.print(f"[cyan]Recommended free sources:[/cyan]")
-    console.print("  - Pixabay: https://pixabay.com/music/")
-    console.print("  - Freesound: https://freesound.org/")
-    console.print("  - incompetech: https://incompetech.com/music/royalty-free/")
-    console.print("  - Bensound: https://www.bensound.com/")
+    if not api_key:
+        console.print("[yellow]Pixabay API key required for automatic download.[/yellow]")
+        console.print("[cyan]Get a free key at: https://pixabay.com/api/docs/[/cyan]")
+        console.print("[cyan]Or run: python download_music.py --help[/cyan]")
+        return []
 
-    return []
+    client = PixabayMusicClient(api_key=api_key)
+    return client.download_batch(
+        query=query,
+        output_dir=output_dir,
+        category=category,
+        count=count,
+    )

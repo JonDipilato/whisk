@@ -17,14 +17,11 @@ console = Console()
 
 
 TITLE_TEMPLATES = [
-    "{character_name}'s {theme} Adventure | {style} Bedtime Story for Kids",
-    "This {style} Story Will Help Your Child Sleep | {character_name}'s {theme} Journey",
-    "{number} {theme} Stories for Kids | {style} Animation Bedtime Story",
-    "{character_name} and the {theme} | Peaceful {style} Story for Children",
-    "Calming {theme} Story | {style} Bedtime Story for Kids",
-    "{character_name}'s Magical {theme} Adventure | {style} Animation",
-    "Sleep Story: {character_name}'s {theme} Journey | {style} Style",
-    "Peaceful {theme} Bedtime Story | {style} Animation for Kids",
+    "The {theme} | A Cozy Bedtime Story",
+    "{character_name}'s Journey to the {theme}",
+    "The {theme} — A Peaceful Sleep Story",
+    "{theme} | Animated Bedtime Story for Kids",
+    "A Night in the {theme} | Sleep Story",
 ]
 
 TITLE_HOOKS = [
@@ -54,7 +51,7 @@ STYLE_TAGS = {
     "ghibli": ["ghibli style", "studio ghibli", "ghibli aesthetic", "anime style"],
     "pixar": ["pixar style", "3d animation", "pixar aesthetic", "cgi animation"],
     "watercolor": ["watercolor", "hand drawn", "watercolor illustration", "art style"],
-    "storybook": ["storybook", "illustration style", "children's book", "picture book"],
+    "storybook": ["storybook", "illustration style", "storybook illustration"],
 }
 
 
@@ -153,13 +150,14 @@ def generate_description(
     style: str,
     summary: Optional[str] = None,
     lesson: Optional[str] = None,
-    channel_name: str = "Peaceful Stories",
-    channel_handle: str = "peacefulstories",
+    channel_name: str = "Cozy Storytime",
+    channel_handle: str = "cozystorytime",
     schedule: str = "Tuesday & Friday",
     chapters: Optional[List[ChapterTimestamp]] = None,
     video_duration: Optional[float] = None,
+    episode_number: Optional[int] = None,
 ) -> str:
-    """Generate a YouTube-optimized video description.
+    """Generate a YouTube-optimized video description (matches successful channels).
 
     Args:
         title: Video title.
@@ -179,56 +177,63 @@ def generate_description(
     """
     lines = []
 
-    # Hook (first 2 lines - most important for SEO)
-    hook = f"Watch {character_name} learn {theme.lower()} in this beautiful {style} bedtime story for kids."
-    lines.append(hook)
-    lines.append("")
-
-    # Summary
+    # Hook paragraph (engaging opener)
     if summary:
-        lines.append(f"{summary}")
+        lines.append(summary)
     else:
         lines.append(
-            f"A peaceful {style} animated story perfect for bedtime, nap time, "
-            f"or any time your child needs to relax."
+            f"In this peaceful {style} bedtime story, join {character_name} "
+            f"on a gentle adventure through {theme}. A calming tale perfect for "
+            f"helping you relax, feel safe, and wind down at the end of the day."
         )
     lines.append("")
 
-    # Chapter timestamps
-    if chapters:
-        lines.append("TIMESTAMPS:")
-        for chapter in chapters:
-            lines.append(f"{chapter.timestamp} - {chapter.title}")
+    if episode_number:
+        lines.append(f"Episode {episode_number}")
         lines.append("")
 
-    # Lesson learned
-    if lesson:
-        lines.append(f"STORY SUMMARY:")
-        lines.append(f"In this story, {character_name} learns about {lesson.lower()}.")
+    # Use cases (bullet points like successful channels)
+    lines.append("Perfect for:")
+    lines.append("• Bedtime routines")
+    lines.append("• Calm-down time")
+    lines.append("• Quiet evenings")
+    lines.append("• Family storytime")
+    lines.append("• Whole-family listening")
+    lines.append("")
+
+    # Chapter timestamps with emoji (like Sleepytime Corner)
+    if chapters:
+        lines.append("⏱️ Chapter Timestamps:")
+        for chapter in chapters:
+            lines.append(f"[{chapter.timestamp}] {chapter.title}")
         lines.append("")
+
+    # Music/sound section
+    lines.append("🎵 About This Video:")
+    lines.append(
+        f"This story features gentle narration paired with beautiful {style} "
+        f"style illustrations and calming background music—designed to support "
+        f"relaxation and peaceful sleep without overstimulation."
+    )
+    lines.append("")
 
     # Channel info
-    lines += [
-        f"ABOUT THIS CHANNEL:",
-        f"Welcome to {channel_name}! We create beautiful {style} animated "
-        f"stories for children. New videos every {schedule}.",
-        "",
-        f"SUBSCRIBE for more: https://www.youtube.com/@{channel_handle}?sub_confirmation=1",
-        "",
-    ]
+    lines.append(f"🌙 More from {channel_name}:")
+    lines.append(f"📺 Subscribe: https://www.youtube.com/@{channel_handle}?sub_confirmation=1")
+    lines.append(f"🔔 New videos every {schedule}")
+    lines.append("")
 
-    # Tags section (for reference, not visible)
-    lines.append("TAGS:")
+    # Hashtags (without # symbols in the tag, but for display)
+    lines.append("🔎 Find us:")
     base_tags = [
-        f"bedtime stories for kids",
-        f"{style} stories",
-        f"animated stories",
-        f"calming stories for sleep",
-        f"children's stories",
-        f"kids bedtime stories",
-        f"peaceful stories",
+        "bedtimestory",
+        "sleepstory",
+        "calmingstory",
+        "relaxation",
+        "ghiblistyle",
+        "cozystory",
     ]
-    lines.extend([f"#{tag.replace(' ', '')}" for tag in base_tags])
+    lines.extend([f"#{tag}" for tag in base_tags])
 
     return "\n".join(lines)
 
@@ -252,22 +257,23 @@ def generate_tags(
     """
     # Primary tags
     tags = [
-        f"{style} bedtime stories for kids",
-        f"{style} stories for children",
-        f"animated bedtime stories",
-        f"calming stories for kids",
-        f"sleep stories for children",
-        f"peaceful bedtime stories",
+        f"{style} bedtime story",
+        f"{style} sleep story",
+        f"animated bedtime story",
+        f"calming bedtime story",
+        f"sleep story",
+        f"peaceful bedtime story",
     ]
 
     # Secondary tags
     tags.extend([
-        "children's stories",
         "animated stories",
-        "kids stories",
         "bedtime stories",
-        "story for kids",
-        "calming stories",
+        "calming story",
+        "relaxing narration",
+        "soothing music",
+        "cozy story",
+        "family storytime",
     ])
 
     # Style-specific tags
@@ -392,6 +398,76 @@ def _extract_chapter_title(prompt: str, scene_id: int) -> str:
     return f"Scene {scene_id}"
 
 
+def generate_story_chapters(
+    total_duration_seconds: float,
+    story_title: str,
+    character_name: str,
+    setting_name: str,
+    target_chapter_count: int = 10,
+) -> List[ChapterTimestamp]:
+    """Generate meaningful story-act based chapters (like successful channels).
+
+    Instead of chapter for every scene, creates ~10 meaningful chapters
+    that represent story progressions. This matches how successful
+    bedtime story channels format their timestamps.
+
+    Args:
+        total_duration_seconds: Total video length in seconds.
+        story_title: Title of the story.
+        character_name: Main character name.
+        setting_name: Story setting/location.
+        target_chapter_count: Approximate number of chapters (default 10).
+
+    Returns:
+        List of meaningful chapter timestamps.
+    """
+    # Chapter templates based on story progression
+    chapter_templates = [
+        "Opening & {setting}",
+        "Meeting {character}",
+        "The Journey Begins",
+        "Discovering Something New",
+        "A Special Moment",
+        "Facing a Challenge",
+        "Working Together",
+        "The Magic Happens",
+        "Heartwarming Discovery",
+        "Peaceful Return Home",
+        "Closing & Goodnight",
+    ]
+
+    # Calculate chapter interval
+    interval = total_duration_seconds / target_chapter_count
+
+    chapters = []
+    current_time = 0.0
+
+    # Select chapter templates based on story structure
+    selected_templates = chapter_templates[:target_chapter_count]
+
+    for i, template in enumerate(selected_templates):
+        # Customize template with story details
+        title = template.format(
+            character=character_name,
+            setting=setting_name,
+        )
+
+        # First chapter is always opening
+        if i == 0:
+            title = f"Opening & {setting_name}"
+
+        # Last chapter is always closing
+        if i == len(selected_templates) - 1:
+            title = "Closing & Goodnight"
+
+        timestamp = format_timestamp(current_time)
+        chapters.append(ChapterTimestamp(title=title, timestamp=timestamp))
+
+        current_time += interval
+
+    return chapters
+
+
 class YouTubeMetadataGenerator:
     """Generate complete YouTube metadata packages."""
 
@@ -450,6 +526,7 @@ class YouTubeMetadataGenerator:
             channel_handle=self.youtube_config.channel_handle,
             schedule=self.youtube_config.upload_schedule,
             chapters=chapters,
+            episode_number=number,
         )
 
         # Generate tags

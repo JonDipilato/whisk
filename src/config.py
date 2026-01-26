@@ -30,7 +30,7 @@ class GenerationConfig(BaseModel):
     images_per_prompt: int = 4
     batches_per_scene: int = 2
     image_format: str = "landscape"
-    download_timeout: int = 60
+    download_timeout: int = 30
 
 
 class QueueConfig(BaseModel):
@@ -70,13 +70,15 @@ class YouTubeConfig(BaseModel):
     channel_handle: str = "peacefulstories"
     upload_schedule: str = "Tuesday & Friday"
     default_tags: List[str] = Field(default_factory=lambda: [
-        "bedtime stories for kids",
-        "animated stories",
+        "bedtime stories",
+        "sleep stories",
         "ghibli style stories",
-        "calming stories for sleep"
+        "calming narration",
+        "cozy bedtime",
+        "relaxing stories"
     ])
     default_category: str = "Education"
-    default_privacy: str = "public"
+    default_privacy: str = "unlisted"
 
 
 class ContentStrategyConfig(BaseModel):
