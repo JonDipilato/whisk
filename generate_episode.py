@@ -166,6 +166,32 @@ FIXED_CHARACTERS = {
         "companion": "a tiny orange fox",
         "personality": "bold and determined",
     },
+    "grandma_rose": {
+        "name": "Grandma Rose",
+        "description": (
+            "Elderly woman, silver hair in a bun, rosy cheeks, warm brown eyes, wearing a blue dress "
+            "with a cream apron with floral embroidery, gentle wise smile, Studio Ghibli anime style, white background"
+        ),
+        "hair": "silver in a bun",
+        "eyes": "warm brown",
+        "clothing": "blue dress with a cream apron with floral embroidery",
+        "accessory": "a worn leather satchel of herbs and keepsakes",
+        "companion": "",
+        "personality": "wise and nurturing",
+    },
+    "lily": {
+        "name": "Lily",
+        "description": (
+            "Young girl, curly dark brown hair, bright brown eyes, wearing a white cable-knit sweater "
+            "and brown pants, curious excited expression, Studio Ghibli anime style, white background"
+        ),
+        "hair": "curly dark brown",
+        "eyes": "bright brown",
+        "clothing": "white cable-knit sweater and brown pants",
+        "accessory": "a small hand-knit scarf from Grandma",
+        "companion": "",
+        "personality": "curious and brave",
+    },
 }
 
 CONFLICT_TEMPLATES = {
@@ -250,6 +276,13 @@ HOOK_TEMPLATES = [
     "A hush fell over the village as {elements2} flickered in the distance, and {c1} and {c2} followed the feeling in their hearts.",
 ]
 
+HOOK_TEMPLATES_GRANDMA = [
+    "On the evening {c2} came to visit, {c1} had a story waiting — but this time, the story was real.",
+    "The kettle had just finished singing when {c1} took {c2}'s hand and said, 'Tonight, I want to show you something special.'",
+    "As the last light faded from the kitchen window, {c1} wrapped a shawl around {c2}'s shoulders and whispered, 'Come with me.'",
+    "The fireflies had barely begun to glow when {c1} and {c2} stepped outside, following {elements0} toward something wonderful.",
+]
+
 PAUSE_LINES = [
     "For a moment, everything was still and calm.",
     "They paused to breathe, letting the quiet settle around them.",
@@ -283,6 +316,7 @@ class EpisodeGenerator:
         use_luna_kai=False,
         avoid_theme=None,
         target_minutes=10,
+        profile="friends",
     ):
         if seed is None:
             seed = int(datetime.now().timestamp() * 1000) % 2**32
@@ -291,6 +325,7 @@ class EpisodeGenerator:
         self.new_character = new_character
         self.use_luna_kai = use_luna_kai
         self.target_minutes = target_minutes
+        self.profile = profile
 
         if theme and theme in THEMES:
             self.theme_key = theme
@@ -634,8 +669,366 @@ Goodnight. May your dreams carry you to peaceful, magical places."""
         narration = self._pad_narration_to_target(narration)
         return narration
 
+    def _make_hook_grandma(self, char1, char2, setting, elements):
+        template = self.rng.choice(HOOK_TEMPLATES_GRANDMA)
+        return template.format(
+            c1=char1["name"],
+            c2=char2["name"],
+            setting=setting,
+            elements0=elements[0],
+            elements1=elements[1],
+            elements2=elements[2],
+        )
+
+    def generate_story_arc_grandma(self, char1, char2, char3=None):
+        setting = self.theme["setting_name"]
+        elements = self.theme["elements"]
+        mood = self.theme["mood"]
+        conflict_key = self.theme["conflict"]
+        conflict = CONFLICT_TEMPLATES[conflict_key]
+
+        style = "Studio Ghibli anime style"
+        g = char1["name"]  # Grandma Rose
+        l = char2["name"]  # Lily
+        g_desc = "elderly woman with silver hair in a bun"
+        l_desc = "young girl with curly brown hair"
+
+        scenes = []
+
+        # ACT 1: A Quiet Beginning (15 scenes)
+        act1 = [
+            f"Cozy cottage kitchen at evening, warm lamplight, teacups on table, grandmother and granddaughter together, {style}",
+            f"{g_desc} pouring tea, smiling warmly at {l_desc} sitting across the table, cozy interior, {style}",
+            f"{l_desc} leaning forward eagerly, listening to {g_desc} tell a story, firelight on their faces, {style}",
+            f"{g_desc} gesturing toward the window where {elements[0]} shimmer faintly in the distance, {style}",
+            f"{l_desc} pressing her face to the window, eyes wide with wonder, {mood} sky outside, {style}",
+            f"{g_desc} wrapping a shawl around {l_desc}'s shoulders, getting ready to go outside, {style}",
+            f"Grandmother and granddaughter stepping out the front door into the {mood} evening, hand in hand, {style}",
+            f"Two figures walking along a quiet country path at dusk, {g_desc} and {l_desc}, lantern light, {style}",
+            f"{l_desc} pointing excitedly at {elements[1]} appearing along the path, {g_desc} smiling knowingly, {style}",
+            f"Path winding through soft twilight, {elements[0]} growing brighter ahead, anticipation, {style}",
+            f"The path opening up to reveal {setting}, {self.theme['setting_desc'][:80]}, both figures gasping, {style}",
+            f"{g_desc} and {l_desc} entering {setting} together, surrounded by {elements[0]}, magical atmosphere, {style}",
+            f"{l_desc} reaching out to touch {elements[0]}, {g_desc} watching with gentle pride, {style}",
+            f"{g_desc} kneeling beside {l_desc} to examine {elements[2]} up close, teaching moment, {style}",
+            f"Grandmother and granddaughter standing at the heart of {setting}, taking it all in, hand in hand, {style}",
+        ]
+
+        # ACT 2: Discovering Together (15 scenes) — guest character appears here
+        act2 = [
+            f"The heart of {setting} in full beauty, {g_desc} and {l_desc} exploring side by side, {style}",
+            f"{g_desc} pointing out details of {elements[1]} to {l_desc}, sharing old knowledge, {style}",
+            f"{l_desc} discovering a hidden patch of {elements[2]}, calling grandmother over excitedly, {style}",
+            f"{g_desc} telling a story about {setting}, {l_desc} sitting on a mossy rock listening, {style}",
+            f"Local magical creatures appearing, curious about the pair, gentle and glowing, {style}",
+            f"{l_desc} befriending a small creature, {g_desc} watching with warm eyes, {style}",
+            f"Grandmother showing granddaughter how to care for {elements[2]}, gentle hands working together, {style}",
+            f"New growth appearing where they helped, {l_desc} clapping with delight, {g_desc} nodding wisely, {style}",
+            f"{l_desc} running ahead on the path, looking back to make sure {g_desc} is following, {style}",
+            f"{g_desc} and {l_desc} climbing a gentle hill to look out over {setting}, panoramic view, {style}",
+            f"Beautiful panoramic view of {setting} from above, all {elements[0]} visible, breathtaking, {style}",
+            f"{g_desc} sitting on a bench while {l_desc} explores nearby, peaceful watching, {style}",
+            f"Grandmother and granddaughter following a hidden trail deeper into {setting}, {style}",
+            f"{l_desc} noticing something is wrong, {elements[0]} dimming, tugging grandmother's sleeve, worried, {style}",
+            f"Hidden entrance to the source of {setting}'s power, ancient symbols glowing faintly, {style}",
+        ]
+
+        if char3:
+            role_data = char3["role_data"]
+            c3_desc = f"mysterious character with {char3['hair']} hair"
+            intro_scene = role_data["intro"].format(setting=setting, elements=elements[0])
+            act2[7] = f"{c3_desc} {intro_scene}, {style}"
+            act2[8] = f"{l_desc} hiding behind {g_desc}, peeking out at the mysterious figure, {style}"
+            act2[9] = f"{g_desc} greeting the mysterious character warmly, {char3['personality']} demeanor, trust forming, {style}"
+
+        # ACT 3: A Gentle Challenge (15 scenes)
+        act3 = [
+            f"Grandmother and granddaughter entering the ancient chamber at {setting}'s core, glowing symbols, {style}",
+            f"Inside a vast space, the power source visible but damaged, {g_desc} looking concerned, {style}",
+            f"The damaged power source in detail, cracks and fading light, {l_desc} looking up at {g_desc} for guidance, {style}",
+            f"{g_desc} studying the ancient symbols on the walls, remembering something, {style}",
+            f"{g_desc} explaining to {l_desc} what needs to be done, kneeling to her level, gentle instruction, {style}",
+            f"{l_desc} gathering pieces of {elements[1]} with determination, small hands working carefully, {style}",
+            f"{g_desc} guiding {l_desc}'s hands to place an offering near the source, patient teaching, {style}",
+            f"Power source responding to the offering, tiny spark of healing light, both smiling, {style}",
+            f"{l_desc} running to gather more, energetic and determined, {g_desc} directing her gently, {style}",
+            f"Creatures joining the effort, bringing pieces to help, {l_desc} working alongside them, {style}",
+            f"{g_desc} humming an old song, the sound itself seeming to help the healing, magical, {style}",
+            f"Power source growing stronger, {l_desc} and {g_desc} working side by side, {style}",
+            f"{l_desc} lifting the final piece, {g_desc}'s steady hands helping her reach, together, {style}",
+            f"Placing the final piece, massive surge of brilliant light, grandmother shielding granddaughter's eyes, {style}",
+            f"Wave of restored magic bursting outward from the source, spreading everywhere, {style}",
+        ]
+
+        if char3:
+            role_data = char3["role_data"]
+            c3_desc = f"mysterious character with {char3['hair']} hair"
+            help_scene = role_data["help"]
+            act3[8] = f"{c3_desc} stepping forward with determination, ready to help, {style}"
+            act3[9] = f"{char3['name']} {help_scene}, magical energy flowing, {style}"
+            act3[10] = f"Grandmother, granddaughter, and {char3['name']} working together, combined effort, {style}"
+
+        # ACT 4: Renewed Wonder (15 scenes)
+        act4 = [
+            f"Grandmother and granddaughter emerging to see {setting} transformed, brighter than ever, {style}",
+            f"{elements[0]} growing more vibrant, {l_desc} spinning with arms wide in delight, {style}",
+            f"{elements[4]} more beautiful now, moving in graceful patterns, renewed energy, {style}",
+            f"New growth everywhere, {elements[2]} blooming in every color, carpet of beauty, {style}",
+            f"The centerpiece of {setting} now magnificent, restored to full power, golden light, {style}",
+            f"Hundreds of creatures filling the air in celebration, {l_desc} laughing, {style}",
+            f"{g_desc} sitting on a mossy stone, {l_desc} resting her head on grandmother's lap, peaceful, {style}",
+            f"Grandmother stroking granddaughter's hair as they watch the celebration together, content, {style}",
+            f"Creatures showing gratitude, a small one landing on {l_desc}'s outstretched finger, {style}",
+            f"{g_desc} receiving a small crystal keepsake from a grateful creature, {style}",
+            f"Grand celebration, all creatures dancing, {l_desc} dancing among them, {g_desc} clapping along, {style}",
+            f"{l_desc} pulling {g_desc} up to dance, grandmother laughing, dancing slowly together, {style}",
+            f"The ancient center at its brightest, sending light into the sky, connecting everything, {style}",
+            f"New elements born from renewed power, floating upward, beautiful cycle, {style}",
+            f"Dawn beginning to lighten the horizon, celebration becoming softer, golden hour, {style}",
+        ]
+
+        # ACT 5: Walking Home (15 scenes)
+        act5 = [
+            f"First light touching {elements[0]}, colors shifting to warm golden tones, {style}",
+            f"Creatures gently guiding grandmother and granddaughter toward the path home, {style}",
+            f"{l_desc} hugging a small creature goodbye, {g_desc} waving warmly to the others, {style}",
+            f"Grandmother and granddaughter walking slowly back, {l_desc} holding {g_desc}'s hand tightly, {style}",
+            f"{setting} growing smaller behind them but still glowing softly in dawn light, {style}",
+            f"{l_desc} yawning, leaning against {g_desc}'s arm as they walk, sleepy after the adventure, {style}",
+            f"{g_desc} wrapping her arm around {l_desc}'s shoulders, steady and warm, sunrise path, {style}",
+            f"Country path in early morning light, two figures walking slowly home, peaceful, {style}",
+            f"Cottage appearing ahead, smoke from chimney, welcoming and familiar, {style}",
+            f"Grandmother opening the cottage door, {l_desc} stumbling in sleepily, warm inside, {style}",
+            f"{g_desc} tucking {l_desc} into bed, pulling the quilt up gently, {style}",
+            f"{g_desc} placing the crystal keepsake on the nightstand beside sleeping {l_desc}, soft glow, {style}",
+            f"{l_desc} already asleep, small smile on her face, grandmother kissing her forehead, {style}",
+            f"The keepsake glowing softly on the nightstand, tiny sparkles drifting, {style}",
+            f"Final wide shot: cottage at sunrise, one tiny magical glow in the window, stars fading, peaceful, {style}",
+        ]
+
+        if char3:
+            role_data = char3["role_data"]
+            c3_desc = f"mysterious character with {char3['hair']} hair"
+            farewell_scene = role_data["farewell"].format(setting=setting, elements=elements[0])
+            act5[3] = f"{char3['name']} standing at the boundary of {setting}, {farewell_scene}, {style}"
+            act5[4] = f"{l_desc} hugging {char3['name']} goodbye, {g_desc} placing a hand on {char3['name']}'s shoulder, {style}"
+
+        scenes = act1 + act2 + act3 + act4 + act5
+        return scenes
+
+    def generate_narration_grandma(self, char1, char2, char3=None):
+        setting = self.theme["setting_name"]
+        elements = self.theme["elements"]
+        g = char1["name"]  # Grandma Rose
+        l = char2["name"]  # Lily
+
+        guest_intro = ""
+        guest_help = ""
+        guest_farewell = ""
+        if char3:
+            c3 = char3["name"]
+            role_data = char3["role_data"]
+            guest_intro = (
+                f"\n\nDeeper into {setting}, they met someone unexpected. "
+                f"{c3}, {role_data['role_desc'].format(setting=setting)}, appeared before them. "
+                f"{g} greeted {c3} warmly, and {l} peeked out from behind her grandmother with curious eyes. "
+                f"Trust came easily — {c3} was {char3['personality']}, and {g} seemed to know their kind.\n"
+            )
+            guest_help = (
+                f" Then {c3} stepped forward. {role_data['help'].capitalize()}. "
+                f"With {c3}'s help, and {g}'s steady guidance, {l} found the courage to finish what they had started.\n"
+            )
+            guest_farewell = (
+                f"\n\nBefore leaving {setting}, they found {c3} one last time. "
+                f"{c3} {role_data['farewell'].format(setting=setting, elements=elements[0])}. "
+                f"{l} waved until {c3} was out of sight, and {g} whispered, 'Some friends are only meant for one night, but they stay with you forever.'\n"
+            )
+
+        hook = self._make_hook_grandma(char1, char2, setting, elements)
+
+        narration = f"""{hook}
+
+{g} had always been the kind of grandmother who kept magic in her pockets. Not the storybook kind — the real kind. The kind you feel when someone who loves you takes your hand and says, 'Let me show you something.'
+
+{l}, with her {char2['hair']} hair and {char2['eyes']} eyes, adored her grandmother more than anyone in the world. Every visit to {g}'s cottage meant stories by the fire, warm tea with honey, and the feeling that anything was possible.
+
+Tonight was different, though. {g} had that look in her eyes — the one that meant an adventure was coming.
+
+'Put on your sweater, dear,' {g} said, wrapping a shawl around her own shoulders. 'There's something I've been waiting to show you, and tonight is the night.'
+
+{l} didn't need to be told twice. She pulled on her white cable-knit sweater and took her grandmother's hand, and together they stepped into the cool evening air.
+
+The path was one {g} seemed to know by heart, though {l} had never seen it before. It wound past the garden, through a grove of old trees, and then — quite suddenly — the world opened up before them.
+
+{setting} stretched out in all its glory, a place where {elements[0]} shimmered with inner light, and {elements[1]} drifted through the air like living dreams.
+
+'Oh, Grandma,' {l} breathed. 'It's beautiful.'
+
+'It is,' {g} said softly, squeezing her hand. 'I came here once, a long time ago. I've been waiting for the right person to share it with.'
+
+They explored together, hand in hand. {g} pointed out the hidden details — how {elements[2]} responded to a gentle touch, how {elements[4]} moved in patterns if you watched long enough. {l} listened to every word, her eyes wide, storing it all away like treasure.{guest_intro}
+
+'Grandma, how do you know so much about this place?' {l} asked.
+
+{g} smiled. 'Some things you learn from books, and some things you learn by paying attention. The best things, though — those you learn by loving the world enough to notice.'
+
+But beauty sometimes carries sorrow with it. At the heart of {setting}, they found its power source damaged and fading. The magic that sustained everything was slowly dimming.
+
+{l} looked up at her grandmother with worried eyes. 'Can we fix it?'
+
+{g} knelt beside her and placed both hands on {l}'s shoulders. 'We can try. Together. I'll show you what to do, and you'll do the hard part — because young hands carry the most hope.'
+
+And so they worked. {g} guided and {l} gathered, her small hands careful with every piece of {elements[1]}. Each offering brought a little more light back. Each act of care healed another crack.
+
+It was not easy. It required patience, and trust, and the kind of quiet courage that doesn't shout but simply keeps going.{guest_help} But together, piece by piece, they mended what was broken.
+
+The moment the power returned, {setting} erupted in renewed beauty. {elements[0].capitalize()} blazed brighter than ever. {elements[4].capitalize()} danced in celebration. The very air seemed to hum a song of gratitude.
+
+{l} threw her arms around her grandmother. 'We did it!'
+
+{g} held her tight and whispered, 'You did it, my darling. I just showed you the way.'
+
+The creatures of {setting} thanked them with small gifts — a crystal that caught the light, a flower that would never wilt. {g} tucked the crystal into her apron pocket and gave the flower to {l}.{guest_farewell}
+
+As dawn painted the sky in gold and rose, they began the walk home. {l}'s steps grew slower and her eyelids grew heavy. She leaned against her grandmother's arm, letting {g}'s steady pace carry them both.
+
+'Grandma?' {l} murmured. 'Will we come back?'
+
+'Whenever you need to, sweetheart. It will always be here.'
+
+Back at the cottage, {g} carried {l} the last few steps to bed, pulling the quilt up to her chin and placing the crystal keepsake on the nightstand. It glowed softly, filling the room with the faintest shimmer of {setting}'s magic.
+
+{g} kissed {l}'s forehead and whispered, 'Goodnight, my brave girl. May your dreams carry you back to all the beautiful places.'
+
+And in the soft glow of that tiny crystal, {l} smiled in her sleep, already dreaming of the next adventure with her grandmother.
+
+Goodnight. May your dreams be warm, and may someone who loves you always be near."""
+
+        narration = self._pad_narration_to_target(narration)
+        return narration
+
+    def _build_scene_refs_friends(self, has_char3=False):
+        """Build per-scene character assignments for friends/Luna-Kai profile.
+
+        Maps each of the 75 scenes to which characters should appear,
+        based on the story arc structure. Gives Whisk better results
+        by only uploading relevant character refs per scene.
+        """
+        B = []             # No characters (establishing/environment shot)
+        C1 = ["C1"]        # First character solo
+        C2 = ["C2"]        # Second character solo
+        BOTH = ["C1", "C2"]
+        C3 = ["C3"]
+        ALL3 = ["C1", "C2", "C3"]
+
+        act1 = [
+            B,     # 1: Peaceful evening village
+            C1,    # 2: c1 looking out window
+            C2,    # 3: c2 running excitedly
+            BOTH,  # 4: Two friends meeting
+            BOTH,  # 5: Two children walking
+            B,     # 6: Path opening to reveal setting
+            BOTH,  # 7: Children entering setting
+            C1,    # 8: Close-up, child reaching
+            C2,    # 9: Companion exploring
+            BOTH,  # 10: Children discovering
+            C1,    # 11: Child interacting
+            B,     # 12: Elements stretching
+            BOTH,  # 13: Children following
+            BOTH,  # 14: Both exploring, laughing
+            BOTH,  # 15: Arriving at heart
+        ]
+
+        act2 = [
+            B,     # 1: Heart revealed
+            B,     # 2: Creatures appearing
+            C1,    # 3: Creatures with c1
+            C2,    # 4: Companion playing
+            BOTH,  # 5: Hidden garden discovery
+            BOTH,  # 6: Helping tend
+            B,     # 7: New growth appearing
+            B,     # 8: Creatures celebrating
+            C1,    # 9: Child climbing viewpoint
+            B,     # 10: Panoramic view
+            BOTH,  # 11: Following hidden path
+            BOTH,  # 12: Crossing bridge
+            BOTH,  # 13: Ancient part
+            BOTH,  # 14: Noticing something wrong
+            B,     # 15: Hidden entrance
+        ]
+
+        act3 = [
+            BOTH,  # 1: Entering chamber
+            B,     # 2: Inside vast space
+            B,     # 3: Damaged source detail
+            BOTH,  # 4: Children looking worried
+            B,     # 5: Ancient images on walls
+            B,     # 6: Images showing connections
+            C1,    # 7: Child placing element
+            B,     # 8: Source responding
+            C2,    # 9: Companion rushing to gather
+            B,     # 10: Creatures joining effort
+            B,     # 11: Source growing stronger
+            BOTH,  # 12: Everyone working together
+            BOTH,  # 13: Final big effort
+            BOTH,  # 14: Placing final piece
+            B,     # 15: Wave of restored magic
+        ]
+
+        act4 = [
+            BOTH,  # 1: Children emerging
+            B,     # 2: Elements vibrant
+            B,     # 3: Creatures beautiful
+            B,     # 4: New growth everywhere
+            B,     # 5: Centerpiece magnificent
+            B,     # 6: Creatures celebration
+            C2,    # 7: Companion dancing
+            BOTH,  # 8: Children sitting peacefully
+            BOTH,  # 9: Creatures showing gratitude
+            C1,    # 10: Child receiving keepsake
+            B,     # 11: Grand celebration
+            BOTH,  # 12: Children joining celebration
+            B,     # 13: Ancient center brightest
+            B,     # 14: New elements born
+            B,     # 15: Dawn beginning
+        ]
+
+        act5 = [
+            B,     # 1: First light
+            BOTH,  # 2: Creatures guiding children
+            BOTH,  # 3: Children hugging creatures goodbye
+            BOTH,  # 4: Children climbing path
+            B,     # 5: Setting growing smaller
+            BOTH,  # 6: Walking back through path
+            C2,    # 7: Companion sleepy
+            C1,    # 8: Child's accessory glowing
+            B,     # 9: Village appearing
+            BOTH,  # 10: Children walking village
+            C1,    # 11: Child planting keepsake
+            C2,    # 12: Other child placing token
+            BOTH,  # 13: Both waving from windows
+            B,     # 14: Garden keepsake sprouting
+            B,     # 15: Final wide shot
+        ]
+
+        if has_char3:
+            act2[7] = C3
+            act2[8] = ALL3
+            act2[9] = ALL3
+            act3[8] = C3
+            act3[9] = ALL3
+            act3[10] = ALL3
+            act5[3] = ALL3
+            act5[4] = ALL3
+
+        all_refs = act1 + act2 + act3 + act4 + act5
+        return [{"character_codes": codes} for codes in all_refs]
+
     def generate_config(self):
-        if self.use_luna_kai:
+        if self.profile == "grandma":
+            char1 = self._get_fixed_character("grandma_rose")
+            char2 = self._get_fixed_character("lily")
+        elif self.use_luna_kai:
             char1 = self._get_fixed_character("luna")
             char2 = self._get_fixed_character("kai")
         else:
@@ -655,24 +1048,39 @@ Goodnight. May your dreams carry you to peaceful, magical places."""
                     NAMES_POOL["female"] + NAMES_POOL["male"]
                 )
 
-        scenes = self.generate_story_arc(char1, char2, char3)
-        narration = self.generate_narration(char1, char2, char3)
+        if self.profile == "grandma":
+            scenes = self.generate_story_arc_grandma(char1, char2, char3)
+            narration = self.generate_narration_grandma(char1, char2, char3)
+        else:
+            scenes = self.generate_story_arc(char1, char2, char3)
+            narration = self.generate_narration(char1, char2, char3)
 
         characters_list = [
-            {"name": char1["name"], "description": char1["description"]},
-            {"name": char2["name"], "description": char2["description"]},
+            {"name": char1["name"], "description": char1["description"], "code": "C1"},
+            {"name": char2["name"], "description": char2["description"], "code": "C2"},
         ]
         if char3:
             characters_list.append({
                 "name": char3["name"],
                 "description": char3["description"],
+                "code": "C3",
                 "role": char3["role"],
                 "appears_from_scene": 22,  # Act 2, scene 8
             })
 
+        if self.profile == "grandma":
+            description = f"Grandma Rose and Lily discover {self.theme['setting_name']} and help restore its magic"
+        else:
+            description = f"Two friends discover {self.theme['setting_name']} and help restore its fading magic"
+
+        # Build scene_refs for friends/Luna-Kai profile
+        scene_refs = None
+        if self.profile != "grandma":
+            scene_refs = self._build_scene_refs_friends(has_char3=char3 is not None)
+
         config = {
             "title": f"{self.theme['setting_name']} - Episode {self.episode_num}",
-            "description": f"Two friends discover {self.theme['setting_name']} and help restore its fading magic",
+            "description": description,
             "episode": self.episode_num,
             "theme": self.theme_key,
             "seed": self.seed,
@@ -683,6 +1091,7 @@ Goodnight. May your dreams carry you to peaceful, magical places."""
             },
             "style": "Studio Ghibli anime style",
             "scenes": scenes,
+            "scene_refs": scene_refs,
             "narration": narration,
             "settings": {
                 "voice": "en-US-AriaNeural",
@@ -717,6 +1126,8 @@ if __name__ == "__main__":
     parser.add_argument("--upload", action="store_true", help="Upload to YouTube after pipeline completes")
     parser.add_argument("--schedule", type=int, default=None,
                         help="Schedule upload N hours from now (implies --upload)")
+    parser.add_argument("--profile", choices=["friends", "grandma"], default="friends",
+                        help="Story profile: friends (default) or grandma (Lily & Grandma Rose)")
     parser.add_argument("--new-character", action="store_true",
                         help="Add a guest character (guardian/trickster/lost_one/healer) who appears in Act 2")
     parser.add_argument("--use-luna-kai", action="store_true",
@@ -792,6 +1203,7 @@ if __name__ == "__main__":
         use_luna_kai=args.use_luna_kai,
         avoid_theme=previous_theme,
         target_minutes=args.target_minutes,
+        profile=args.profile,
     )
 
     config = generator.generate_config()
@@ -803,7 +1215,10 @@ if __name__ == "__main__":
     else:
         output_dir = Path(output_dir)
 
-    if args.use_luna_kai and len(config["characters"]) >= 2:
+    if args.profile == "grandma" and len(config["characters"]) >= 2:
+        config["characters"][0]["image_path"] = "data/characters/grandmother_01.png"
+        config["characters"][1]["image_path"] = "data/characters/lily_01.png"
+    elif args.use_luna_kai and len(config["characters"]) >= 2:
         config["characters"][0]["image_path"] = "data/characters/luna_01.png"
         config["characters"][1]["image_path"] = "data/characters/kai_01.png"
 

@@ -155,6 +155,12 @@ class StoryVideoMaker:
         default_path = self.envs_dir / f"{scene_name}.png"
         return self._resolve_ref_path(scene.get("image_path", ""), default_path)
 
+    def _resolve_env_path(self, env_data: dict) -> Path:
+        """Resolve path for a multi-environment entry."""
+        env_name = env_data.get("name", "env").lower().replace(" ", "_")
+        default_path = self.envs_dir / f"grandma_{env_name}.png"
+        return self._resolve_ref_path(env_data.get("image_path", ""), default_path)
+
     # =========================================================================
     # STEP 1: Generate character & scene reference images via Whisk
     # =========================================================================
@@ -176,14 +182,27 @@ class StoryVideoMaker:
             else:
                 refs_needed.append(("character", name, char["description"], filepath))
 
-        # Check scene
-        scene = self.config["scene"]
-        scene_name = scene["name"].lower().replace(" ", "_")
-        scene_path = self._get_scene_ref_path()
-        if scene_path.exists() and scene_path.stat().st_size > 10000:
-            status(f"Scene '{scene['name']}' already exists ({scene_path.stat().st_size // 1024}KB)")
+        # Check environments (multi-environment for grandma Excel configs)
+        environments = self.config.get("environments", {})
+        if environments:
+            for env_code, env_data in environments.items():
+                if env_code == "E1":
+                    continue  # Plain bg, no ref needed
+                env_path = self._resolve_env_path(env_data)
+                if env_path.exists() and env_path.stat().st_size > 10000:
+                    status(f"Environment '{env_data['name']}' already exists ({env_path.stat().st_size // 1024}KB)")
+                else:
+                    env_name = env_data["name"].lower().replace(" ", "_")
+                    refs_needed.append(("environment", env_name, env_data["description"], env_path))
         else:
-            refs_needed.append(("scene", scene_name, scene["description"], scene_path))
+            # Existing single-scene check
+            scene = self.config["scene"]
+            scene_name = scene["name"].lower().replace(" ", "_")
+            scene_path = self._get_scene_ref_path()
+            if scene_path.exists() and scene_path.stat().st_size > 10000:
+                status(f"Scene '{scene['name']}' already exists ({scene_path.stat().st_size // 1024}KB)")
+            else:
+                refs_needed.append(("scene", scene_name, scene["description"], scene_path))
 
         if not refs_needed:
             success("All reference images already exist!")
@@ -238,23 +257,7 @@ class StoryVideoMaker:
         app_config = load_config()
         style = self.config.get("style", "")
         scenes = self.config["scenes"]
-
-        # Get character file paths
-        char_files = []
-        for char in self.config["characters"]:
-            filepath = self._get_character_ref_path(char)
-            if filepath.exists():
-                char_files.append(filepath)
-            else:
-                error(f"Character reference missing: {filepath}")
-                error("Run step 1 first (reference generation)")
-                return False
-
-        # Get scene file path
-        scene_path = self._get_scene_ref_path()
-        if not scene_path.exists():
-            error(f"Scene reference missing: {scene_path}")
-            return False
+        scene_refs = self.config.get("scene_refs")
 
         # Check which scenes already have images
         scenes_to_generate = []
@@ -274,42 +277,133 @@ class StoryVideoMaker:
 
         controller = WhiskController(app_config)
 
-        for scene_idx, scene_prompt in scenes_to_generate:
-            scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
-            scene_dir.mkdir(parents=True, exist_ok=True)
+        if scene_refs:
+            # Per-scene character ref switching
+            environments = self.config.get("environments", {})
+            char_map = {c.get("code"): c for c in self.config["characters"] if c.get("code")}
 
-            full_prompt = f"{scene_prompt}, {style}" if style else scene_prompt
-            status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
+            # Single-environment fallback (Luna/Kai: scene_refs but no environments dict)
+            single_env_path = None
+            if not environments:
+                sp = self._get_scene_ref_path()
+                if sp.exists():
+                    single_env_path = sp
 
-            try:
-                controller.start()
-                time.sleep(3)
+            for scene_idx, scene_prompt in scenes_to_generate:
+                scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
+                scene_dir.mkdir(parents=True, exist_ok=True)
 
-                # Upload character and environment references
-                controller.upload_all_images(
-                    char_paths=char_files,
-                    env_path=scene_path,
-                )
-                time.sleep(2)
+                full_prompt = f"{scene_prompt}, {style}" if style else scene_prompt
+                status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
 
-                # Set prompt and generate
-                controller.set_prompt(full_prompt)
-                time.sleep(1)
-                controller.generate()
-                controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+                # Look up refs for this scene
+                ref_info = scene_refs[scene_idx - 1]
 
-                # Download results
-                downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
-                if downloaded:
-                    success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                # Build character files for this scene
+                char_files_for_scene = []
+                for code in ref_info.get("character_codes", []):
+                    char_data = char_map.get(code)
+                    if char_data:
+                        fp = self._get_character_ref_path(char_data)
+                        if fp.exists():
+                            char_files_for_scene.append(fp)
+
+                # Build environment path for this scene
+                env_code = ref_info.get("environment_code", "")
+                if environments and env_code and env_code != "E1":
+                    env_data = environments.get(env_code, {})
+                    env_path = self._resolve_env_path(env_data) if env_data else None
                 else:
-                    error(f"Scene {scene_idx}: No images downloaded")
+                    # Single environment (Luna/Kai style)
+                    env_path = single_env_path
 
-            except Exception as e:
-                error(f"Scene {scene_idx} error: {e}")
-            finally:
-                controller.stop()
-                time.sleep(2)
+                try:
+                    controller.start()
+                    time.sleep(3)
+
+                    # Upload scene-specific references
+                    # Only upload when there are characters — the controller
+                    # relies on subject uploads to locate the SCENE file input.
+                    # C0 scenes (no characters) use prompt-only generation;
+                    # their prompts already contain full visual descriptions.
+                    if char_files_for_scene:
+                        controller.upload_all_images(
+                            char_paths=char_files_for_scene,
+                            env_path=env_path if env_path and env_path.exists() else None,
+                        )
+                        time.sleep(2)
+
+                    # Set prompt and generate
+                    controller.set_prompt(full_prompt)
+                    time.sleep(1)
+                    controller.generate()
+                    controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+
+                    # Download results
+                    downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
+                    if downloaded:
+                        success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                    else:
+                        error(f"Scene {scene_idx}: No images downloaded")
+
+                except Exception as e:
+                    error(f"Scene {scene_idx} error: {e}")
+                finally:
+                    controller.stop()
+                    time.sleep(2)
+        else:
+            # Existing path: same refs for all scenes
+            char_files = []
+            for char in self.config["characters"]:
+                filepath = self._get_character_ref_path(char)
+                if filepath.exists():
+                    char_files.append(filepath)
+                else:
+                    error(f"Character reference missing: {filepath}")
+                    error("Run step 1 first (reference generation)")
+                    return False
+
+            scene_path = self._get_scene_ref_path()
+            if not scene_path.exists():
+                error(f"Scene reference missing: {scene_path}")
+                return False
+
+            for scene_idx, scene_prompt in scenes_to_generate:
+                scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
+                scene_dir.mkdir(parents=True, exist_ok=True)
+
+                full_prompt = f"{scene_prompt}, {style}" if style else scene_prompt
+                status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
+
+                try:
+                    controller.start()
+                    time.sleep(3)
+
+                    # Upload character and environment references
+                    controller.upload_all_images(
+                        char_paths=char_files,
+                        env_path=scene_path,
+                    )
+                    time.sleep(2)
+
+                    # Set prompt and generate
+                    controller.set_prompt(full_prompt)
+                    time.sleep(1)
+                    controller.generate()
+                    controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+
+                    # Download results
+                    downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
+                    if downloaded:
+                        success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                    else:
+                        error(f"Scene {scene_idx}: No images downloaded")
+
+                except Exception as e:
+                    error(f"Scene {scene_idx} error: {e}")
+                finally:
+                    controller.stop()
+                    time.sleep(2)
 
         return True
 
@@ -318,6 +412,11 @@ class StoryVideoMaker:
     # =========================================================================
     def generate_narration(self):
         header("STEP 3: Generating Narration Audio")
+
+        text = self.config["narration"]
+        if not text or not text.strip():
+            status("No narration text in config (music-only video)")
+            return None
 
         narration_path = self.audio_dir / "narration.mp3"
         if narration_path.exists() and narration_path.stat().st_size > 50000:
@@ -332,7 +431,6 @@ class StoryVideoMaker:
 
         voice = self._get_settings("voice", "en-US-AriaNeural")
         rate = self._get_settings("narration_speed", "-15%")
-        text = self.config["narration"]
 
         status(f"Generating narration with voice: {voice}, rate: {rate}")
 
@@ -580,13 +678,14 @@ class StoryVideoMaker:
         narr_duration = float(result.stdout.strip()) if result.stdout.strip() else 300
 
         # Account for xfade overlap: total_duration = N*scene_dur - (N-1)*xfade
-        # We want total_duration = narr_duration, so:
-        # scene_dur = (narr_duration + (N-1)*xfade) / N
-        # Xfade is min(0.8, scene_dur*0.15), estimate ~0.55s + small buffer
+        # We want total_duration >= narr_duration, so:
+        # scene_dur = (narr_duration + buffer + (N-1)*xfade) / N
+        # Xfade is min(0.8, scene_dur*0.15) — use 0.8 (max) for conservative estimate
         num_scenes = len(scenes)
-        estimated_xfade = 0.58
-        secs_per_scene = (narr_duration + (num_scenes - 1) * estimated_xfade) / num_scenes
-        status(f"Narration: {narr_duration:.0f}s, {secs_per_scene:.2f}s per scene (adjusted for transitions)")
+        xfade_estimate = 0.8  # Max xfade duration, ensures video is never too short
+        buffer_seconds = 3    # Extra padding so narration never gets cut off
+        secs_per_scene = (narr_duration + buffer_seconds + (num_scenes - 1) * xfade_estimate) / num_scenes
+        status(f"Narration: {narr_duration:.0f}s, {secs_per_scene:.2f}s per scene (with {buffer_seconds}s buffer)")
 
         # Collect all scene images
         all_images = self._get_scene_images()
@@ -710,6 +809,125 @@ class StoryVideoMaker:
                 error("Failed to create music-only video")
 
         # Clean up temp act videos
+        for av in act_videos:
+            if av.exists():
+                av.unlink()
+        if silent_video.exists():
+            silent_video.unlink()
+        for f in self.output_dir.glob("_act_*_concat.txt"):
+            f.unlink()
+
+        return True
+
+    def assemble_music_only_video(self, music_path):
+        """Assemble a music-only video when no narration text is provided.
+
+        Uses a fixed seconds-per-scene based on the music track duration,
+        or a default of 5 seconds per scene.
+        """
+        header("STEP 5: Assembling Music-Only Video (no narration)")
+
+        try:
+            subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            error("ffmpeg not found. Install ffmpeg first.")
+            return False
+
+        scenes = self.config["scenes"]
+        resolution = self._get_settings("resolution", "1920x1080")
+        width, height = resolution.split("x")
+        fps = self._get_settings("fps", 24)
+        crf = self._get_settings("video_quality", 18)
+
+        # Get music duration for pacing
+        result = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0",
+             str(music_path)],
+            capture_output=True, text=True
+        )
+        music_duration = float(result.stdout.strip()) if result.stdout.strip() else 0
+
+        num_scenes = len(scenes)
+        if music_duration > 0:
+            secs_per_scene = music_duration / num_scenes
+        else:
+            secs_per_scene = 5.0
+
+        status(f"Music: {music_duration:.0f}s, {secs_per_scene:.2f}s per scene")
+
+        all_images = self._get_scene_images()
+        if not all_images:
+            error("No scene images found!")
+            return False
+
+        encoder_msg = f"GPU ({self.encoder})" if self.use_gpu else f"CPU ({self.encoder})"
+        status(f"Found {len(all_images)} scene images, building with transitions...")
+        status(f"Using encoder: {encoder_msg}")
+
+        # Build act videos (same as assemble_videos)
+        act_size = 15
+        act_videos = []
+        for act_idx in range(0, len(all_images), act_size):
+            act_images = all_images[act_idx:act_idx + act_size]
+            act_video = self._build_act_video(
+                act_images, secs_per_scene, act_idx // act_size,
+                width, height, fps, crf
+            )
+            if act_video:
+                act_videos.append(act_video)
+
+        if not act_videos:
+            error("Failed to build any act videos!")
+            return False
+
+        success(f"Built {len(act_videos)} act segments with transitions")
+
+        # Concatenate acts
+        concat_file = self.output_dir / "ffmpeg_acts_concat.txt"
+        with open(concat_file, "w") as f:
+            for av in act_videos:
+                f.write(f"file '{av}'\n")
+
+        silent_video = self.output_dir / "_full_video_silent.mp4"
+        concat_cmd = [
+            "ffmpeg", "-y",
+            "-f", "concat", "-safe", "0", "-i", str(concat_file),
+            "-c:v", self.encoder, "-preset", self.preset, self.quality_flag, str(crf),
+            "-pix_fmt", "yuv420p",
+            str(silent_video)
+        ]
+        subprocess.run(concat_cmd, capture_output=True)
+
+        if not silent_video.exists():
+            error("Failed to concatenate act videos")
+            return False
+
+        total_duration = music_duration if music_duration > 0 else secs_per_scene * num_scenes
+        title_safe = self.config["title"].lower().replace(" ", "_").replace("-", "")[:30]
+        output_path = self.videos_dir / f"{title_safe}_music_only.mp4"
+
+        status("Mixing music-only version...")
+        mux_cmd = [
+            "ffmpeg", "-y",
+            "-i", str(silent_video),
+            "-i", str(music_path),
+            "-filter_complex",
+            f"[1:a]volume=0.7,afade=t=in:st=0:d=3,"
+            f"afade=t=out:st={total_duration - 8:.3f}:d=8[mus]",
+            "-map", "0:v", "-map", "[mus]",
+            "-c:v", "copy",
+            "-c:a", "aac", "-b:a", "192k",
+            "-shortest",
+            str(output_path)
+        ]
+        subprocess.run(mux_cmd, capture_output=True)
+
+        if output_path.exists() and output_path.stat().st_size > 100000:
+            success(f"Music-only video: {output_path.name} ({output_path.stat().st_size // 1024 // 1024}MB)")
+        else:
+            error("Failed to create music-only video")
+
+        # Clean up
         for av in act_videos:
             if av.exists():
                 av.unlink()
@@ -1099,6 +1317,8 @@ class StoryVideoMaker:
         # Step 5: Assemble videos
         if narration_path:
             self.assemble_videos(narration_path, music_path)
+        elif music_path:
+            self.assemble_music_only_video(music_path)
 
         # Step 6: Generate metadata + thumbnail
         print()

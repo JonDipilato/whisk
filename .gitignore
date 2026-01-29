@@ -46,3 +46,4 @@ data/environments/*
 !data/environments/.gitkeep
 data/characters/*
 !data/characters/.gitkeep
+.env
