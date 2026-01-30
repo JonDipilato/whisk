@@ -1132,6 +1132,14 @@ if __name__ == "__main__":
                         help="Add a guest character (guardian/trickster/lost_one/healer) who appears in Act 2")
     parser.add_argument("--use-luna-kai", action="store_true",
                         help="Use fixed Luna & Kai character traits aligned to reference images")
+    parser.add_argument("--use-glm", action="store_true",
+                        help="Use AI to generate unique stories (OpenAI by default)")
+    parser.add_argument("--openai", action="store_true", default=True,
+                        help="Use OpenAI API for AI generation (default, requires OPENAI_API_KEY)")
+    parser.add_argument("--local", action="store_true",
+                        help="Use local LM Studio for AI generation")
+    parser.add_argument("--glm", action="store_true",
+                        help="Use Z.AI GLM API (requires GLM_API_KEY)")
     parser.add_argument("--target-minutes", type=float, default=10,
                         help="Target narration length in minutes (default: 10)")
     parser.add_argument("--output-dir", default=None,
@@ -1195,6 +1203,75 @@ if __name__ == "__main__":
             last_episode = folder_count
         episode_num = last_episode + 1
 
+    # =========================================================================
+    # AI PATH: Use local LM Studio or remote GLM to generate unique stories
+    # =========================================================================
+    # --glm or --local automatically triggers AI generation with Luna/Kai
+    # (--use-glm and --use-luna-kai are still supported for backwards compatibility)
+    use_ai_generation = args.use_glm or args.glm or args.local
+    if use_ai_generation:
+        from glm_story_generator import generate_glm_config, save_episode_counter
+
+        # Determine provider: local > glm > openai (default)
+        if args.local:
+            provider = "local"
+        elif args.glm:
+            provider = "glm"
+        else:
+            provider = "openai"
+
+        # Determine output directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = args.output_dir
+        if output_dir is None:
+            output_dir = f"output/episodes/luna_kai_ep{episode_num}_{timestamp}"
+        output_dir = Path(output_dir)
+
+        # Generate config via AI
+        config = generate_glm_config(
+            episode_num=episode_num,
+            output_dir=str(output_dir),
+            theme_hint=args.theme,  # Use theme as hint
+            target_minutes=args.target_minutes,
+            provider=provider,
+        )
+
+        # Save config
+        output_path = Path(args.output)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+
+        # Save episode counter
+        save_episode_counter(episode_num)
+
+        print(f"\n  GLM Episode Generated!")
+        print(f"  Title:      {config['title']}")
+        print(f"  Characters: Luna & Kai")
+        print(f"  Scenes:     {len(config['scenes'])}")
+        print(f"  Saved to:   {output_path}")
+        print()
+
+        if args.run:
+            print("  Starting pipeline...")
+            import subprocess
+            upload = args.upload or args.schedule is not None
+            cmd = [
+                sys.executable,
+                "run_story.py",
+                "--config", str(output_path),
+                "--output-dir", str(output_dir),
+            ]
+            if upload:
+                cmd.append("--upload")
+            if args.schedule is not None:
+                cmd.extend(["--schedule", str(args.schedule)])
+            subprocess.run(cmd)
+
+        sys.exit(0)
+
+    # =========================================================================
+    # TEMPLATE PATH: Use hardcoded templates (original behavior)
+    # =========================================================================
     generator = EpisodeGenerator(
         theme=args.theme,
         episode_num=episode_num,

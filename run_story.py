@@ -26,6 +26,7 @@ import asyncio
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -89,7 +90,13 @@ class StoryVideoMaker:
             output_path = Path(output_dir)
             self.output_dir = output_path if output_path.is_absolute() else (self.root / output_path)
         else:
-            self.output_dir = self.root / "output"
+            # Auto-detect episode folder from config's environment paths
+            detected_dir = self._detect_episode_folder()
+            if detected_dir:
+                self.output_dir = detected_dir
+                status(f"Auto-detected episode folder: {detected_dir.name}", "cyan")
+            else:
+                self.output_dir = self.root / "output"
         self.chars_dir = self.root / "data" / "characters"
         self.envs_dir = self.root / "data" / "environments"
         self.audio_dir = self.output_dir / "audio"
@@ -134,6 +141,50 @@ class StoryVideoMaker:
             sys.exit(1)
 
         return config
+
+    def _detect_episode_folder(self) -> Optional[Path]:
+        """Auto-detect episode folder from config's environment/scene paths.
+
+        Looks for paths like 'output/episodes/luna_kai_ep11_20260130_080911/refs/...'
+        and extracts the episode folder.
+        """
+        # Check environments for episode folder path
+        environments = self.config.get("environments", {})
+        for env_data in environments.values():
+            img_path = env_data.get("image_path", "")
+            if "episodes" in img_path and "/refs/" in img_path:
+                # Extract episode folder: output/episodes/EPISODE_FOLDER/refs/...
+                parts = img_path.replace("\\", "/").split("/")
+                try:
+                    eps_idx = parts.index("episodes")
+                    if eps_idx + 1 < len(parts):
+                        episode_folder = "/".join(parts[:eps_idx + 2])
+                        full_path = Path(episode_folder)
+                        if not full_path.is_absolute():
+                            full_path = self.root / full_path
+                        if full_path.exists():
+                            return full_path
+                except (ValueError, IndexError):
+                    pass
+
+        # Check scene image_path as backup
+        scene = self.config.get("scene", {})
+        img_path = scene.get("image_path", "")
+        if "episodes" in img_path:
+            parts = img_path.replace("\\", "/").split("/")
+            try:
+                eps_idx = parts.index("episodes")
+                if eps_idx + 1 < len(parts):
+                    episode_folder = "/".join(parts[:eps_idx + 2])
+                    full_path = Path(episode_folder)
+                    if not full_path.is_absolute():
+                        full_path = self.root / full_path
+                    if full_path.exists():
+                        return full_path
+            except (ValueError, IndexError):
+                pass
+
+        return None
 
     def _get_settings(self, key, default=None):
         return self.config.get("settings", {}).get(key, default)
@@ -253,6 +304,7 @@ class StoryVideoMaker:
 
         from src.config import load_config
         from src.whisk_controller import WhiskController
+        from src.models import ImageFormat
 
         app_config = load_config()
         style = self.config.get("style", "")
@@ -321,6 +373,10 @@ class StoryVideoMaker:
                     controller.start()
                     time.sleep(3)
 
+                    # Set 16:9 landscape aspect ratio for all scenes
+                    controller.set_format(ImageFormat.LANDSCAPE)
+                    time.sleep(1)
+
                     # Upload scene-specific references
                     # Only upload when there are characters — the controller
                     # relies on subject uploads to locate the SCENE file input.
@@ -379,6 +435,10 @@ class StoryVideoMaker:
                     controller.start()
                     time.sleep(3)
 
+                    # Set 16:9 landscape aspect ratio for all scenes
+                    controller.set_format(ImageFormat.LANDSCAPE)
+                    time.sleep(1)
+
                     # Upload character and environment references
                     controller.upload_all_images(
                         char_paths=char_files,
@@ -408,12 +468,18 @@ class StoryVideoMaker:
         return True
 
     # =========================================================================
-    # STEP 3: Generate narration audio
+    # STEP 3: Generate narration audio (per-scene or combined)
     # =========================================================================
     def generate_narration(self):
         header("STEP 3: Generating Narration Audio")
 
-        text = self.config["narration"]
+        # Check for per-scene narrations (Excel-style)
+        scene_narrations = self.config.get("scene_narrations", [])
+        if scene_narrations and any(n.strip() for n in scene_narrations):
+            return self._generate_per_scene_narration(scene_narrations)
+
+        # Fall back to combined narration
+        text = self.config.get("narration", "")
         if not text or not text.strip():
             status("No narration text in config (music-only video)")
             return None
@@ -446,6 +512,112 @@ class StoryVideoMaker:
         else:
             error("Narration generation failed")
             return None
+
+    def _generate_per_scene_narration(self, scene_narrations: list):
+        """Generate TTS for each scene individually (Excel-style sync)."""
+        import edge_tts
+        import subprocess
+
+        voice = self._get_settings("voice", "en-US-AriaNeural")
+        rate = self._get_settings("narration_speed", "-15%")
+
+        scene_audio_dir = self.audio_dir / "scenes"
+        scene_audio_dir.mkdir(parents=True, exist_ok=True)
+
+        # Check if already generated
+        durations_file = self.audio_dir / "scene_durations.json"
+        if durations_file.exists():
+            import json
+            durations = json.loads(durations_file.read_text(encoding="utf-8"))
+            if len(durations) == len(scene_narrations):
+                status(f"Per-scene narration exists ({len(durations)} scenes)")
+                # Also check combined file exists
+                combined = self.audio_dir / "narration.mp3"
+                if combined.exists():
+                    return combined
+
+        status(f"Generating per-scene narration ({len(scene_narrations)} scenes)...")
+
+        scene_durations = []
+        audio_files = []
+
+        # Build list of scenes to generate
+        scenes_to_generate = []
+        for idx, narr_text in enumerate(scene_narrations):
+            scene_audio = scene_audio_dir / f"scene_{idx+1:03d}.mp3"
+            audio_files.append(scene_audio)
+            if not scene_audio.exists() or scene_audio.stat().st_size < 1000:
+                scenes_to_generate.append((idx, narr_text, scene_audio))
+
+        # Generate all scenes in one async batch (fixes Windows asyncio issues)
+        async def _generate_all_scenes():
+            for idx, text, out_path in scenes_to_generate:
+                if text and text.strip():
+                    try:
+                        communicate = edge_tts.Communicate(text.strip(), voice=voice, rate=rate)
+                        await communicate.save(str(out_path))
+                    except Exception as e:
+                        status(f"  Scene {idx+1} TTS error: {e}")
+                        # Create silent fallback
+                        subprocess.run([
+                            "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                            "-t", "0.5", "-q:a", "9", str(out_path)
+                        ], capture_output=True)
+                else:
+                    # Create silent audio for scenes without narration (0.5s)
+                    subprocess.run([
+                        "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                        "-t", "0.5", "-q:a", "9", str(out_path)
+                    ], capture_output=True)
+
+                if (idx + 1) % 20 == 0:
+                    status(f"  Generated {idx + 1}/{len(scene_narrations)} scene audios...")
+
+                # Small delay for rate limiting
+                await asyncio.sleep(0.05)
+
+        if scenes_to_generate:
+            status(f"  Generating {len(scenes_to_generate)} new scene audio files...")
+            asyncio.run(_generate_all_scenes())
+
+        # Get durations for all scenes
+        for idx, scene_audio in enumerate(audio_files):
+            if scene_audio.exists():
+                result = subprocess.run([
+                    "ffprobe", "-v", "error", "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1", str(scene_audio)
+                ], capture_output=True, text=True)
+                try:
+                    dur = float(result.stdout.strip())
+                except:
+                    dur = 0.5
+            else:
+                dur = 0.5
+
+            scene_durations.append(dur)
+
+            if (idx + 1) % 20 == 0:
+                status(f"  Generated {idx + 1}/{len(scene_narrations)} scene audios...")
+
+        # Save durations for video assembly
+        import json
+        durations_file.write_text(json.dumps(scene_durations), encoding="utf-8")
+
+        # Concatenate all scene audios into one file
+        concat_file = self.audio_dir / "scene_concat.txt"
+        with open(concat_file, "w") as f:
+            for audio in audio_files:
+                f.write(f"file '{audio.absolute()}'\n")
+
+        combined = self.audio_dir / "narration.mp3"
+        subprocess.run([
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+            "-i", str(concat_file), "-c", "copy", str(combined)
+        ], capture_output=True)
+
+        total_dur = sum(scene_durations)
+        success(f"Per-scene narration complete: {len(scene_durations)} scenes, {total_dur:.1f}s total")
+        return combined
 
     # =========================================================================
     # STEP 4: Find or set music (auto-rotates per episode)
@@ -496,12 +668,14 @@ class StoryVideoMaker:
     ]
 
     def _get_scene_images(self):
-        """Collect best image for each scene."""
+        """Collect best image for each scene, with scene indices for duration matching."""
         scenes = self.config["scenes"]
         images = []
+        scene_indices = []  # Track which scene index each image corresponds to
         for i in range(1, len(scenes) + 1):
             scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
             if not scene_dir.exists():
+                status(f"[yellow]Warning: scene_{i:03d}_batch_1 folder missing[/yellow]")
                 continue
             candidates = (
                 list(scene_dir.glob("*.png")) +
@@ -511,6 +685,10 @@ class StoryVideoMaker:
             if candidates:
                 best = max(candidates, key=lambda p: p.stat().st_size)
                 images.append(best)
+                scene_indices.append(i - 1)  # 0-indexed for duration array
+            else:
+                status(f"[yellow]Warning: scene_{i:03d}_batch_1 folder empty[/yellow]")
+        self._scene_indices = scene_indices  # Store for duration matching
         return images
 
     def _build_act_video(self, images, secs_per_scene, act_num, width, height, fps, crf):
@@ -617,15 +795,28 @@ class StoryVideoMaker:
                 status(f"  FFmpeg: {result.stderr[-200:]}", "dim")
             return self._build_act_simple(images, secs_per_scene, act_num, width, height, fps, crf)
 
-    def _build_act_simple(self, images, secs_per_scene, act_num, width, height, fps, crf):
-        """Fallback: simple concat with fade in/out per act."""
+    def _build_act_simple(self, images, secs_per_scene, act_num, width, height, fps, crf, scene_durations=None):
+        """Fallback: simple concat with fade in/out per act.
+
+        Args:
+            secs_per_scene: Default duration (used if scene_durations not provided)
+            scene_durations: Optional list of per-scene durations (for Excel-style sync)
+        """
         act_video = self.output_dir / f"_act_{act_num + 1}.mp4"
         concat_file = self.output_dir / f"_act_{act_num + 1}_concat.txt"
 
         lines = []
-        for img in images:
+        total = 0
+        for idx, img in enumerate(images):
+            # Use per-scene duration if available, else default
+            dur = scene_durations[idx] if scene_durations and idx < len(scene_durations) else secs_per_scene
+            dur = max(dur, 0.5)  # Minimum 0.5s per scene
             lines.append(f"file '{img}'")
-            lines.append(f"duration {secs_per_scene:.3f}")
+            lines.append(f"duration {dur:.3f}")
+            total += dur
+            # Debug: Print first few durations for act 1
+            if act_num == 0 and idx < 3:
+                status(f"[DEBUG] Act1 scene {idx+1}: duration={dur:.3f}s")
         # Hold last frame
         lines.append(f"file '{images[-1]}'")
         lines.append("duration 0.1")
@@ -633,22 +824,64 @@ class StoryVideoMaker:
         with open(concat_file, "w") as f:
             f.write("\n".join(lines))
 
-        total = secs_per_scene * len(images)
+        # Keep concat file for debugging
+        debug_concat = self.output_dir / f"_debug_act_{act_num + 1}_concat.txt"
+        shutil.copy(concat_file, debug_concat)
+
+        # Build each scene with zoompan effect, then concat
+        scene_videos = []
+        for idx, img in enumerate(images):
+            dur = scene_durations[idx] if scene_durations and idx < len(scene_durations) else secs_per_scene
+            dur = max(dur, 0.5)
+            frames = int(dur * int(fps))
+
+            scene_video = self.output_dir / f"_act_{act_num + 1}_scene_{idx + 1}.mp4"
+
+            # Alternate zoom direction for variety
+            if (act_num + idx) % 2 == 0:
+                # Slow zoom in (1.0 -> 1.08)
+                zoom_expr = "min(zoom+0.0005,1.08)"
+            else:
+                # Slow zoom out (1.08 -> 1.0)
+                zoom_expr = "if(eq(on,1),1.08,max(zoom-0.0005,1.0))"
+
+            # Zoompan: slow zoom with center focus
+            cmd = [
+                "ffmpeg", "-y",
+                "-loop", "1", "-i", str(img),
+                "-vf",
+                f"zoompan=z='{zoom_expr}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+                f"d={frames}:s={width}x{height}:fps={fps}",
+                "-t", str(dur),
+                "-c:v", self.encoder, "-preset", self.preset, self.quality_flag, str(crf),
+                "-pix_fmt", "yuv420p",
+                str(scene_video)
+            ]
+            subprocess.run(cmd, capture_output=True)
+            if scene_video.exists():
+                scene_videos.append(scene_video)
+
+        # Concat all scene videos for this act
+        if not scene_videos:
+            return None
+
+        scene_concat = self.output_dir / f"_act_{act_num + 1}_scenes.txt"
+        with open(scene_concat, "w") as f:
+            for sv in scene_videos:
+                f.write(f"file '{sv}'\n")
+
         cmd = [
             "ffmpeg", "-y",
-            "-f", "concat", "-safe", "0", "-i", str(concat_file),
-            "-filter_complex",
-            f"[0:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
-            f"crop={width}:{height}:(iw-{width})/2:(ih-{height})/2,"
-            f"setsar=1,fps={fps},"
-            f"fade=t=in:st=0:d=0.5,"
-            f"fade=t=out:st={total - 0.5:.3f}:d=0.5[vid]",
-            "-map", "[vid]",
-            "-c:v", self.encoder, "-preset", self.preset, self.quality_flag, str(crf),
-            "-pix_fmt", "yuv420p",
+            "-f", "concat", "-safe", "0", "-i", str(scene_concat),
+            "-c", "copy",
             str(act_video)
         ]
         subprocess.run(cmd, capture_output=True)
+
+        # Cleanup scene videos
+        for sv in scene_videos:
+            sv.unlink(missing_ok=True)
+        scene_concat.unlink(missing_ok=True)
         return act_video if act_video.exists() else None
 
     def assemble_videos(self, narration_path, music_path):
@@ -677,6 +910,14 @@ class StoryVideoMaker:
         )
         narr_duration = float(result.stdout.strip()) if result.stdout.strip() else 300
 
+        # Check for per-scene durations (Excel-style sync)
+        scene_durations_file = self.audio_dir / "scene_durations.json"
+        scene_durations = None
+        if scene_durations_file.exists():
+            import json
+            scene_durations = json.loads(scene_durations_file.read_text(encoding="utf-8"))
+            status(f"Using per-scene narration durations ({len(scene_durations)} scenes)")
+
         # Account for xfade overlap: total_duration = N*scene_dur - (N-1)*xfade
         # We want total_duration >= narr_duration, so:
         # scene_dur = (narr_duration + buffer + (N-1)*xfade) / N
@@ -693,6 +934,22 @@ class StoryVideoMaker:
             error("No scene images found!")
             return False
 
+        # CRITICAL: Map durations to actual images using scene indices
+        # (handles missing scenes like scene 69 being empty)
+        if scene_durations and hasattr(self, '_scene_indices'):
+            # Build matched durations list - one duration per actual image
+            matched_durations = []
+            for scene_idx in self._scene_indices:
+                if scene_idx < len(scene_durations):
+                    matched_durations.append(scene_durations[scene_idx])
+                else:
+                    matched_durations.append(secs_per_scene)  # fallback
+            if len(matched_durations) != len(all_images):
+                error(f"Duration matching failed: {len(matched_durations)} durations for {len(all_images)} images")
+            else:
+                scene_durations = matched_durations
+                status(f"Matched {len(scene_durations)} durations to {len(all_images)} images")
+
         encoder_msg = f"GPU ({self.encoder})" if self.use_gpu else f"CPU ({self.encoder})"
         status(f"Found {len(all_images)} scene images, building with transitions...")
         status(f"Using encoder: {encoder_msg}")
@@ -702,10 +959,23 @@ class StoryVideoMaker:
         act_videos = []
         for act_idx in range(0, len(all_images), act_size):
             act_images = all_images[act_idx:act_idx + act_size]
-            act_video = self._build_act_video(
-                act_images, secs_per_scene, act_idx // act_size,
-                width, height, fps, crf
-            )
+
+            # Get per-scene durations for this act if available
+            act_durations = None
+            if scene_durations:
+                act_durations = scene_durations[act_idx:act_idx + act_size]
+                # Use simple builder for per-scene sync (no xfade complexity)
+                act_video = self._build_act_simple(
+                    act_images, secs_per_scene, act_idx // act_size,
+                    width, height, fps, crf, scene_durations=act_durations
+                )
+            else:
+                # Use full xfade transitions for uniform timing
+                act_video = self._build_act_video(
+                    act_images, secs_per_scene, act_idx // act_size,
+                    width, height, fps, crf
+                )
+
             if act_video:
                 act_videos.append(act_video)
 
@@ -952,10 +1222,12 @@ class StoryVideoMaker:
 
         # Extract info from story config
         char_name = self.config["characters"][0]["name"]
-        # Use the setting name (e.g. "Everbloom Sanctuary") not the raw theme key ("garden")
-        theme = self.config["scene"]["name"]
+        # Use the actual story title for GLM-generated stories
+        story_title = self.config.get("title", "")
+        theme = self.config["scene"]["name"].replace("_", " ").title()
         style = self.config.get("style", "Studio Ghibli anime style")
-        custom_title = self.config.get("custom_title")
+        # Use story title as custom_title so it doesn't get overwritten by templates
+        custom_title = story_title if story_title else self.config.get("custom_title")
         episode = self.config.get("episode")
         description_text = self.config.get("description")
 
@@ -972,16 +1244,93 @@ class StoryVideoMaker:
             if result.stdout.strip():
                 secs_per_scene = float(result.stdout.strip()) / len(scenes)
 
-        # Create act-based chapters (5 acts × 15 scenes)
-        act_names = ["Discovery", "Exploration", "Challenge", "Renewal", "Return"]
-        segments = []
-        for act_idx, act_name in enumerate(act_names):
-            scene_start = act_idx * 15
-            if scene_start < len(scenes):
+        # Create chapters from environment transitions (for GLM configs)
+        # or fall back to act-based chapters
+        environments = self.config.get("environments", {})
+        scene_refs = self.config.get("scene_refs", [])
+
+        if environments and scene_refs:
+            # Build chapters from environment changes
+            segments = []
+            current_env = None
+            scene_count_in_chapter = 0
+
+            for idx, ref in enumerate(scene_refs):
+                env_code = ref.get("environment_code", "")
+                if env_code != current_env and env_code in environments:
+                    if current_env is not None and scene_count_in_chapter > 0:
+                        # Close previous chapter
+                        segments[-1]["image_count"] = scene_count_in_chapter
+
+                    # Start new chapter
+                    env_data = environments[env_code]
+                    env_name = env_data.get("name", env_code).replace("_", " ").title()
+                    segments.append({
+                        "scene_id": idx + 1,
+                        "title": env_name,
+                        "image_count": 1,
+                    })
+                    current_env = env_code
+                    scene_count_in_chapter = 1
+                else:
+                    scene_count_in_chapter += 1
+
+            # Close last chapter
+            if segments and scene_count_in_chapter > 0:
+                segments[-1]["image_count"] = scene_count_in_chapter
+        else:
+            # Extract location/setting names from scene prompts for meaningful chapters
+            # Look for keywords that indicate scene locations
+            location_keywords = ["village", "forest", "meadow", "stream", "cave", "mountain",
+                               "valley", "garden", "path", "bridge", "lake", "shore", "hill",
+                               "cottage", "tower", "clearing", "grove", "waterfall", "peak"]
+
+            segments = []
+            scenes_per_chapter = max(1, len(scenes) // 8)  # ~8 chapters
+
+            for chapter_idx in range(0, len(scenes), scenes_per_chapter):
+                chunk = scenes[chapter_idx:chapter_idx + scenes_per_chapter]
+                if not chunk:
+                    break
+
+                # Try to extract a location from the first scene in this chunk
+                first_prompt = chunk[0].lower() if isinstance(chunk[0], str) else str(chunk[0]).lower()
+                chapter_title = None
+
+                for keyword in location_keywords:
+                    if keyword in first_prompt:
+                        # Find the full phrase around the keyword
+                        words = first_prompt.split()
+                        for i, word in enumerate(words):
+                            if keyword in word:
+                                # Get 1-2 words before for context (e.g., "ancient forest")
+                                start = max(0, i - 1)
+                                phrase = " ".join(words[start:i + 1])
+                                chapter_title = phrase.title().replace(",", "").strip()[:25]
+                                break
+                        if chapter_title:
+                            break
+
+                # Fallback titles based on story arc position
+                if not chapter_title:
+                    position = chapter_idx / len(scenes)
+                    if position < 0.15:
+                        chapter_title = "The Beginning"
+                    elif position < 0.3:
+                        chapter_title = "Setting Out"
+                    elif position < 0.5:
+                        chapter_title = "Into the Unknown"
+                    elif position < 0.7:
+                        chapter_title = "The Heart of It"
+                    elif position < 0.85:
+                        chapter_title = "Finding the Way"
+                    else:
+                        chapter_title = "Journey Home"
+
                 segments.append({
-                    "scene_id": scene_start + 1,
-                    "title": f"Act {act_idx + 1}: {act_name}",
-                    "image_count": 15,
+                    "scene_id": chapter_idx + 1,
+                    "title": chapter_title,
+                    "image_count": len(chunk),
                 })
 
         chapters = generate_chapters(segments, duration_per_image=secs_per_scene, transition_time=0)
@@ -1165,9 +1514,10 @@ class StoryVideoMaker:
             self._draw_episode_badge(draw, episode_num, (30, 30), badge_font)
 
         # Extract title parts for thumbnail text
-        # Use the setting name as the big text, and a short hook as subtitle
-        # This keeps thumbnail text short and readable at small sizes
-        main_title = self.config["scene"]["name"]
+        # Use the story title as the big text
+        main_title = self.config.get("title", self.config["scene"]["name"])
+        # Clean up any underscores in the title
+        main_title = main_title.replace("_", " ").title()
         subtitle = "A Bedtime Story"
         episode_suffix = self.config.get("episode")
         if episode_suffix:
@@ -1361,13 +1711,37 @@ if __name__ == "__main__":
                         help="Only upload existing video (skip all generation)")
     parser.add_argument("--metadata-only", action="store_true",
                         help="Only regenerate YouTube metadata + thumbnail")
+    parser.add_argument("--update-video", type=str, default=None,
+                        help="Update metadata/thumbnail for existing YouTube video (provide video ID)")
 
     args = parser.parse_args()
     maker = StoryVideoMaker(config_path=args.config, output_dir=args.output_dir)
 
     upload = args.upload or args.schedule is not None
 
-    if args.metadata_only:
+    if args.update_video:
+        # Regenerate metadata/thumbnail and update existing YouTube video
+        maker.generate_metadata_and_thumbnail()
+        from src.youtube_uploader import YouTubeUploader
+        import json
+
+        uploader = YouTubeUploader()
+        if uploader.authenticate():
+            # Load metadata
+            metadata_path = maker.videos_dir / "youtube_metadata.json"
+            if metadata_path.exists():
+                meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+                thumb_path = maker.output_dir / "thumbnails" / "youtube_thumbnail.png"
+                uploader.update_video_metadata(
+                    video_id=args.update_video,
+                    title=meta.get("title"),
+                    description=meta.get("description"),
+                    tags=meta.get("tags"),
+                    thumbnail_path=str(thumb_path) if thumb_path.exists() else None,
+                )
+            else:
+                error("No metadata file found - run --metadata-only first")
+    elif args.metadata_only:
         maker.generate_metadata_and_thumbnail()
     elif args.upload_only:
         maker.upload_to_youtube(schedule_hours=args.schedule)

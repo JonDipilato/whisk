@@ -1,114 +1,460 @@
 {
-  "title": "Starfall Valley - Where Stars Come to Rest",
-  "description": "Two friends discover a magical valley where stars come to rest",
-
+  "title": "Frost Whisper Peaks - Episode 11",
+  "description": "Two friends discover Frost Whisper Peaks and help restore its fading magic",
+  "episode": 11,
+  "theme": "winter",
+  "seed": 275927154,
   "characters": [
     {
-      "name": "Luna",
-      "description": "Anime girl with long silver hair, blue eyes, light blue dress with star patterns, holding a small lantern, barefoot, gentle smile, Ghibli style, white background"
+      "name": "Maple",
+      "description": "Anime character, tied in a ponytail white hair, deep green eyes, wearing a tunic with leaf patterns, carrying a worn leather satchel, a small blue bird nearby, dreamy and imaginative expression, Ghibli style, white background",
+      "code": "C1"
     },
     {
-      "name": "Kai",
-      "description": "Anime boy age 13, messy dark brown hair, amber eyes, green jacket with patches, cream shirt, brown shorts, boots, tiny orange fox on shoulder, confident smile, Ghibli style, white background"
+      "name": "Fox",
+      "description": "Anime character, short messy dark brown hair, violet eyes, wearing a cozy knit sweater over shorts, carrying a compass that points to magic, a friendly firefly swarm nearby, clever and resourceful expression, Ghibli style, white background",
+      "code": "C2"
     }
   ],
-
   "scene": {
-    "name": "Starfall Valley",
-    "description": "Wide landscape of a magical valley at twilight, crystal trees glowing blue and purple, floating lily pads above a stream, stars falling like rain, waterfall of starlight, fireflies, bioluminescent flowers, Ghibli style"
+    "name": "Frost Whisper Peaks",
+    "description": "Wide landscape of mountain peaks where aurora borealis touches the snow, ice caves with frozen music, snow foxes with glowing fur, hot springs surrounded by crystal ice formations, pine forests dusted with starlight, Ghibli style",
+    "image_path": "output\\episodes\\episode_11_winter_20260130_144733\\refs\\frost_whisper_peaks.png"
   },
-
   "style": "Studio Ghibli anime style",
-
   "scenes": [
-    "Twilight sky over a quiet village, first star falling in the distance, warm cottages with glowing windows",
-    "Young girl with silver hair looking out her bedroom window at the falling star, wonder in her eyes, lantern on desk",
-    "Boy with dark hair and fox on shoulder running through village street toward the falling star, excited",
-    "Two young friends meeting at the village gate at dusk, silver-haired girl with lantern and dark-haired boy with fox",
-    "Two children walking along a forest path at night, lantern lighting the way, fireflies around them",
-    "Forest path opening to reveal a hidden valley below, crystal trees glowing blue, stars falling gently, children gasping",
-    "Children carefully descending a mossy hillside into the glowing valley, stars drifting past like snow",
-    "First crystal tree up close, transparent trunk with light pulsing inside, girl reaching out to touch it",
-    "Fox jumping off boy's shoulder to chase a falling star, playful and curious, crystal forest background",
-    "A fallen star resting in the grass like a small glowing orb, children kneeling beside it in wonder",
-    "Girl gently picking up the star orb, it pulses warmly in her hands, face lit with soft blue glow",
-    "Stream of liquid starlight flowing through the valley, floating lily pads hovering above it",
-    "Boy stepping onto a floating lily pad, balancing carefully, girl watching with amused smile",
-    "Both children riding floating lily pads down the starlight stream, laughing together",
-    "Lily pads bringing them to a clearing with a massive ancient crystal tree, the heart of the valley",
-    "Enormous ancient crystal tree in center of valley, roots spreading like rivers of light, branches touching sky",
-    "Tiny luminous creatures emerging from crystal flowers, curious about children, moth-like wings glowing",
-    "Luminous creatures landing on girl's outstretched hands, gentle and trusting, boy watching with soft smile",
-    "Fox playing with luminous creatures, jumping and twirling, creating trails of light, children laughing",
-    "Children discovering a garden of star flowers that bloom only at night, each petal a tiny constellation",
-    "Girl and boy planting a fallen star in the earth, star taking root and beginning to grow",
-    "Small crystal sapling growing from planted star, leaves unfurling with inner light, children amazed",
-    "Valley creatures gathering around new sapling, celebrating with swirling light dances",
-    "Boy climbing a crystal tree to get a better view of the valley, girl calling up to him",
-    "View from crystal tree top showing entire valley spread below, starfall waterfall in distance",
-    "Children following a path of embedded stars in the ground, leading toward the waterfall",
-    "Crossing a bridge made of woven crystal vines over a deep ravine, stars falling around them",
-    "Arriving at the base of the starfall waterfall, cascading light instead of water, mist of sparkles",
-    "Girl holding her lantern up to the waterfall, it responds by glowing brighter, connection between them",
-    "Behind the waterfall a hidden cave entrance glows with ancient symbols, children exchanging excited glances",
-    "Children entering the cave behind the waterfall, walls covered in glowing constellation maps",
-    "Cave opening into a vast underground chamber, ceiling like a private sky full of trapped stars",
-    "Ancient stone pedestal in center of chamber, a large dim crystal resting on it, the valley's heart stone",
-    "Girl noticing the heart stone is cracked and fading, valley creatures looking worried",
-    "Boy finding ancient murals on cave walls showing the valley in full bloom, understanding the history",
-    "Murals showing how the heart stone powers the entire valley's magic, stars flowing from it like fountain",
-    "Girl placing her fallen star orb near the cracked heart stone, blue light reaching toward it",
-    "Heart stone beginning to absorb the star's energy, crack starting to heal with golden light",
-    "Boy encouraging the fox to bring more fallen stars from outside, fox running eagerly",
-    "Luminous creatures carrying tiny fallen stars in their wings toward the heart stone, teamwork",
-    "Heart stone glowing stronger as more stars are placed around it, cracks healing one by one",
-    "Children working together to lift a large fallen star, straining but determined, creatures helping",
-    "Large star placed on pedestal next to heart stone, massive surge of light, everyone shielding eyes",
-    "Heart stone fully restored, brilliant white-blue light flooding the chamber, symbols on walls glowing",
-    "Wave of magic energy bursting from cave, spreading across entire valley, restoring everything",
-    "Children emerging from cave to see valley transformed, brighter than ever, new crystal trees sprouting",
-    "Crystal trees growing taller and more vibrant, branches reaching toward sky, light flowing through them",
-    "Stars falling more beautifully now, spiraling down in graceful patterns instead of random drops",
-    "New flowers blooming across the valley floor, each one a different color of starlight",
-    "The starfall waterfall now twice as magnificent, rainbow of light cascading down cliff face",
-    "Hundreds of luminous creatures filling the sky in celebration, creating living constellation patterns",
-    "Fox dancing with joy among the new star flowers, little orange figure among blue and purple blooms",
-    "Children sitting together on a crystal root, watching the valley celebrate, peaceful smiles",
-    "Luminous creatures forming a crown of light above girl's head in gratitude, she laughs surprised",
-    "Boy receiving a small crystal seed from the ancient tree as a thank you gift, holding it carefully",
-    "Valley creatures performing a synchronized light dance, spiraling upward like a tornado of stars",
-    "Children joining the dance, floating slightly off the ground carried by magic, pure joy",
-    "Ancient crystal tree at its brightest, sending beams of light into the sky, connecting earth to stars",
-    "New stars being born from the ancient tree's branches, floating upward to join the sky",
-    "Dawn beginning to lighten the horizon, valley magic becoming softer, golden hour approaching",
-    "First light of dawn touching the crystal trees, they shift from blue to warm amber glow",
-    "Valley creatures gently guiding children back toward the path home, bittersweet farewell",
-    "Girl hugging a luminous creature goodbye, boy waving to the ancient tree, fox looking back",
-    "Children climbing back up the hillside, looking back at the valley one more time",
-    "Valley growing smaller behind them but still glowing softly in early dawn, path ahead lit by lantern",
-    "Walking back through the forest, sunrise filtering through leaves, world feeling different now",
-    "Fox curling up sleepily on boy's shoulder, tired from the adventure, peaceful",
-    "Girl's lantern now permanently glowing with soft starlight from the valley, a piece of magic kept",
-    "Village gate appearing ahead as morning sun rises fully, familiar and welcoming",
-    "Children walking through quiet morning village streets, everyone still asleep, their secret adventure",
-    "Boy planting the crystal seed in his backyard garden, small act of bringing magic home",
-    "Girl placing her glowing lantern on her windowsill, it illuminates her room with soft starlight",
-    "Both children waving goodbye to each other from their windows across the street, smiling",
-    "Crystal seed in garden already beginning to sprout a tiny glowing leaf, magic spreading",
-    "Final wide shot: village at sunrise with one tiny crystal sapling glowing in a garden, stars fading, promise of return"
+    "Peaceful evening in a small village, warm lights in windows, cold but cozy sky above, Studio Ghibli anime style",
+    "character with tied in a ponytail white hair looking out window at something magical in the distance, wonder in their eyes, Studio Ghibli anime style",
+    "character with short messy dark brown hair and a friendly firefly swarm running excitedly through the village toward the magical sight, Studio Ghibli anime style",
+    "Two friends meeting at the village edge at dusk, ready for adventure, Studio Ghibli anime style",
+    "Two children walking along a winding path at night, one carrying a worn leather satchel, Studio Ghibli anime style",
+    "Path opening to reveal Frost Whisper Peaks for the first time, mountain peaks where aurora borealis touches the snow, ice caves with frozen mus, children gasping in awe, Studio Ghibli anime style",
+    "Children carefully entering Frost Whisper Peaks, surrounded by aurora borealis, magical atmosphere, Studio Ghibli anime style",
+    "Close-up of aurora borealis, beautiful and ethereal, child reaching out to touch, Studio Ghibli anime style",
+    "a friendly firefly swarm playfully exploring ice caves, curious and delighted, Studio Ghibli anime style",
+    "Children discovering snow foxes up close, kneeling in wonder, soft light, Studio Ghibli anime style",
+    "Child gently interacting with snow foxes, it responds with light, magical connection, Studio Ghibli anime style",
+    "hot springs stretching across the landscape, beautiful and inviting, Studio Ghibli anime style",
+    "Children following hot springs, adventurous expressions, magical landscape around, Studio Ghibli anime style",
+    "Both children exploring together, laughing, frozen waterfalls around them, Studio Ghibli anime style",
+    "Arriving at the heart of Frost Whisper Peaks, most beautiful spot, ancient and powerful, Studio Ghibli anime style",
+    "The heart of Frost Whisper Peaks revealed in full glory, breathtaking vista, Studio Ghibli anime style",
+    "Local magical creatures appearing, curious about the children, friendly and glowing, Studio Ghibli anime style",
+    "Creatures interacting with character with tied in a ponytail white hair, landing on outstretched hands, trusting, Studio Ghibli anime style",
+    "a friendly firefly swarm playing with local creatures, creating light trails together, Studio Ghibli anime style",
+    "Children discovering a hidden garden of ice caves, each one unique and beautiful, Studio Ghibli anime style",
+    "Children helping to tend snow foxes, gentle and careful, rewarding work, Studio Ghibli anime style",
+    "New growth appearing where children helped, small miracle of nature, Studio Ghibli anime style",
+    "Local creatures celebrating the new growth, dancing with joy, festive, Studio Ghibli anime style",
+    "Child climbing to a high viewpoint, looking out over all of Frost Whisper Peaks, panoramic, Studio Ghibli anime style",
+    "Beautiful panoramic view of Frost Whisper Peaks from above, all aurora borealis visible, breathtaking, Studio Ghibli anime style",
+    "Children following a hidden path deeper into Frost Whisper Peaks, determined expressions, Studio Ghibli anime style",
+    "Crossing a natural bridge over a gap, brave moment, frozen waterfalls below, Studio Ghibli anime style",
+    "Arriving at the most ancient part of Frost Whisper Peaks, powerful and awe-inspiring, Studio Ghibli anime style",
+    "Children noticing something is wrong, aurora borealis dimming, worry on faces, Studio Ghibli anime style",
+    "Hidden entrance to the source of Frost Whisper Peaks's power, ancient symbols glowing faintly, Studio Ghibli anime style",
+    "Children entering the ancient chamber at Frost Whisper Peaks's core, walls with glowing symbols, Studio Ghibli anime style",
+    "Inside a vast space, the source of power visible but clearly damaged, Studio Ghibli anime style",
+    "The damaged power source shown in detail, cracks and fading light, something is very wrong, Studio Ghibli anime style",
+    "Children looking worried, creatures gathered around looking sad, the problem is clear, Studio Ghibli anime style",
+    "Ancient images on walls showing Frost Whisper Peaks in its full glory, understanding the history, Studio Ghibli anime style",
+    "Images showing how the power source connects to everything in Frost Whisper Peaks, Studio Ghibli anime style",
+    "Child placing a found element near the damaged source, first attempt to help, Studio Ghibli anime style",
+    "Power source responding to the offering, tiny spark of healing light, hope, Studio Ghibli anime style",
+    "a friendly firefly swarm rushing out to gather more helpful elements, determined, Studio Ghibli anime style",
+    "Creatures joining the effort, bringing pieces of ice caves to help, teamwork, Studio Ghibli anime style",
+    "Power source growing stronger with each offering, healing visible, Studio Ghibli anime style",
+    "Everyone working together, children and creatures united, beautiful cooperation, Studio Ghibli anime style",
+    "Final big effort, children lifting something important together, straining but hopeful, Studio Ghibli anime style",
+    "Placing the final piece, massive surge of brilliant light, everyone shielding eyes, Studio Ghibli anime style",
+    "Wave of restored magic bursting outward from the source, spreading everywhere, Studio Ghibli anime style",
+    "Children emerging to see Frost Whisper Peaks transformed, brighter and more magical than ever, Studio Ghibli anime style",
+    "aurora borealis growing more vibrant and numerous, spreading across the landscape, Studio Ghibli anime style",
+    "frozen waterfalls more beautiful now, moving in graceful patterns, renewed energy, Studio Ghibli anime style",
+    "New growth everywhere, snow foxes blooming in every color, carpet of beauty, Studio Ghibli anime style",
+    "The centerpiece of Frost Whisper Peaks now twice as magnificent, restored to full power, Studio Ghibli anime style",
+    "Hundreds of creatures filling the air in celebration, creating patterns of light, Studio Ghibli anime style",
+    "a friendly firefly swarm dancing joyfully among the renewed ice caves, pure happiness, Studio Ghibli anime style",
+    "Children sitting together peacefully, watching the celebration, content smiles, Studio Ghibli anime style",
+    "Creatures showing gratitude to the children, gentle gifts of light, Studio Ghibli anime style",
+    "Child receiving a small keepsake from Frost Whisper Peaks, a crystal seed or glowing token, Studio Ghibli anime style",
+    "Grand celebration, all creatures dancing in synchronized beauty, spectacular, Studio Ghibli anime style",
+    "Children joining the celebration, carried by magic, floating slightly, pure joy, Studio Ghibli anime style",
+    "The ancient center at its brightest, sending light into the sky, connecting everything, Studio Ghibli anime style",
+    "New elements being born from the renewed power, floating upward, beautiful cycle, Studio Ghibli anime style",
+    "Dawn beginning to lighten the horizon, celebration becoming softer, golden hour, Studio Ghibli anime style",
+    "First light touching aurora borealis, colors shifting to warm golden tones, transition, Studio Ghibli anime style",
+    "Creatures gently guiding children toward the path home, bittersweet farewell, Studio Ghibli anime style",
+    "Children hugging creatures goodbye, a friendly firefly swarm looking back, farewell, Studio Ghibli anime style",
+    "Children climbing back up the path, looking back at Frost Whisper Peaks one more time, Studio Ghibli anime style",
+    "Frost Whisper Peaks growing smaller behind them but still glowing softly in dawn light, Studio Ghibli anime style",
+    "Walking back through the approach path, sunrise filtering through, world feels different, Studio Ghibli anime style",
+    "a friendly firefly swarm sleepy and content, riding on shoulder, tired from adventure, Studio Ghibli anime style",
+    "Child's a worn leather satchel now glowing with Frost Whisper Peaks's magic, a piece kept forever, Studio Ghibli anime style",
+    "Village appearing ahead as morning sun rises fully, familiar and welcoming, Studio Ghibli anime style",
+    "Children walking through quiet morning village, everyone asleep, their secret, Studio Ghibli anime style",
+    "Child planting the keepsake in their garden, bringing magic home, Studio Ghibli anime style",
+    "Other child placing glowing token on windowsill, room lit with soft magical light, Studio Ghibli anime style",
+    "Both children waving to each other from windows, smiling, friendship, Studio Ghibli anime style",
+    "Garden keepsake already sprouting tiny magical growth, magic spreading, Studio Ghibli anime style",
+    "Final wide shot: village at sunrise, one tiny magical glow in a garden, stars fading, promise of return, Studio Ghibli anime style"
   ],
-
-  "narration": "In a quiet village at the edge of the world, where the sky seemed close enough to touch, two friends shared a secret that no one else knew.\n\nLuna had silver hair that shimmered like moonlight, and she carried a small lantern wherever she went. She had always felt drawn to the stars, watching them from her window each night, wondering where they went when they fell.\n\nKai was her best friend, a boy with messy dark hair and a tiny orange fox who rode on his shoulder. He was always ready to follow wherever curiosity led, and tonight, curiosity was calling.\n\nA single star streaked across the twilight sky and disappeared beyond the forest. Luna grabbed her lantern. Kai whistled for his fox. They met at the village gate without a word, both knowing exactly where they needed to go.\n\nThe forest path was dark, but Luna's lantern lit the way. Fireflies danced around them as they walked deeper and deeper into the trees. And then, the path opened up, and they both gasped.\n\nBelow them lay Starfall Valley. Crystal trees glowed with soft blue and purple light. Stars drifted down from the sky like gentle snow, coming to rest among glowing flowers. A waterfall of pure starlight cascaded down distant cliffs, and streams of liquid light flowed through meadows of bioluminescent grass.\n\nThey descended carefully into the valley, reaching out to touch the crystal trees. The fox leaped from Kai's shoulder to chase a falling star, and Luna knelt beside one resting in the grass. It was warm, and it pulsed gently, like a tiny heartbeat.\n\nFloating lily pads hovered above a starlight stream, and the children climbed aboard, riding them like boats through the magical landscape. The lily pads carried them to the heart of the valley, where an enormous ancient crystal tree stood, its roots spreading like rivers of light.\n\nTiny luminous creatures emerged from the flowers, moth-like beings with glowing wings. They landed on Luna's hands, trusting and gentle. The fox danced among them, creating swirling trails of light.\n\nBut as the children explored deeper, they found something troubling. Behind the starfall waterfall, a hidden cave held the valley's heart stone, a great crystal on a stone pedestal. It was cracked, and its light was fading. Without it, all the magic of the valley would slowly disappear.\n\nLuna placed the fallen star she had found near the heart stone, and watched as blue light reached out from it, beginning to heal the cracks. Kai sent his fox to gather more fallen stars, and the luminous creatures joined in, carrying tiny stars in their wings.\n\nTogether, they all worked through the night. Star after star was brought to the heart stone, each one healing it a little more. Finally, Luna and Kai lifted one last great star together, and placed it on the pedestal.\n\nA brilliant wave of light burst from the cave and swept across the entire valley. Crystal trees grew taller and brighter. New flowers bloomed in every color of starlight. The waterfall became twice as magnificent, and stars began falling in beautiful spirals instead of random drops.\n\nThe valley was reborn, more magical than ever before. The luminous creatures celebrated, forming living constellation patterns in the sky. They placed a crown of light on Luna's head, and gave Kai a crystal seed as thanks.\n\nAs the first light of dawn appeared on the horizon, the valley creatures gently guided the children back toward home. Luna hugged her new friends goodbye. Kai waved to the ancient tree. The fox looked back one last time.\n\nThey walked home through the sunrise forest, changed forever by what they had seen. Luna's lantern now glowed with permanent starlight, a piece of the valley she would always carry. Kai planted his crystal seed in the garden behind his house.\n\nFrom their windows across the street, they waved to each other, smiling. And in Kai's garden, the crystal seed had already begun to sprout, one tiny glowing leaf reaching toward the fading stars.\n\nThe magic of Starfall Valley would always be with them. And perhaps, on quiet nights when the stars fall just right, they will return again.\n\nGoodnight. May your dreams be full of falling stars.",
-
+  "scene_refs": [
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1"
+      ]
+    },
+    {
+      "character_codes": [
+        "C2"
+      ]
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "character_codes": []
+    },
+    {
+      "character_codes": []
+    }
+  ],
+  "narration": "Before the stars fully woke, Maple and Fox noticed ice caves drifting through the air, like a soft invitation.\n\nThe world held its breath, peaceful and steady.\n\nIn a quiet village where the days were gentle and the nights were full of wonder, two friends shared a bond stronger than anything the world could offer.\n\nThey listened to the silence, warm and safe.\n\nThe light lingered, and time seemed to slow.\n\nMaple, with tied in a ponytail white hair and deep green eyes, always carried a worn leather satchel. Maple was dreamy and imaginative, always looking beyond the horizon for something magical.\n\nFox was different but perfectly matched. With a friendly firefly swarm always nearby and a heart full of adventure, Fox was clever and resourceful, ready for whatever the world would bring.\n\nThe night grew deeper, and the path opened gently ahead.\n\nSoftly, the night whispered and carried them onward.\n\nOne evening, something extraordinary appeared in the distance. Without hesitation, they set out together, following the mystery beyond the village and into the unknown.\n\nThe path led them through shadows and silence, until suddenly the world opened up before them. Frost Whisper Peaks stretched out in all its glory, a place where aurora borealis shimmered with inner light, and ice caves drifted through the air like living dreams.\n\nThey paused to breathe, letting the quiet settle around them.\n\nThey explored with wide eyes and open hearts. snow foxes responded to their gentle touch, and frozen waterfalls seemed to welcome them as old friends.\n\nSoftly, the night whispered and carried them onward.\n\nFor a moment, everything was still and calm.\n\nThe journey continued, slow and steady, like a lullaby.\n\nThe light lingered, and time seemed to slow.\n\nWith each step, the world felt softer and more magical.\n\nThey moved on together, guided by the quiet glow around them.\n\nDeeper they ventured, discovering wonders at every turn. Local creatures, shy at first, grew bold enough to approach, sensing the children's kind spirits. Fox's a friendly firefly swarm made friends instantly, and soon they were all exploring together.\n\nA gentle hush drifted through the air, soft and unhurried.\n\nA quiet calm wrapped around them like a blanket.\n\nBut beauty sometimes hides sorrow. At the heart of Frost Whisper Peaks, they found its power source damaged and fading. The magic that sustained everything was slowly dying.\n\nWithout hesitation, they knew what to do. Working alongside the creatures of Frost Whisper Peaks, they gathered what was needed. Every small offering of ice caves brought a little more light back. Every act of care healed another crack.\n\nThey listened to the silence, warm and safe.\n\nA gentle hush drifted through the air, soft and unhurried.\n\nIt was not easy. It required patience, courage, and trust in each other. But together, with the help of every creature who called this place home, they restored what was broken.\n\nThe moment the power returned, Frost Whisper Peaks erupted in renewed beauty. Aurora borealis blazed brighter than ever. Frozen waterfalls danced in celebration. The very air seemed to sing with gratitude.\n\nFor a moment, everything was still and calm.\n\nThe creatures thanked them with gifts of light and crystal, small pieces of this magical place to carry forever.\n\nAs dawn painted the sky in gold and rose, Maple and Fox said their gentle goodbyes. The path home was shorter than the journey there, as paths home always are.\n\nBack in their village, the world looked the same but felt different. Maple's a worn leather satchel now held a permanent glow, and Fox planted a crystal keepsake in the garden behind their house.\n\nFrom their windows, they waved goodnight to each other. And in the garden, already, something small and magical had begun to grow.\n\nFrost Whisper Peaks would always be there, waiting for their return. And perhaps, on the quietest nights, its magic still reaches their village, carried on the wind.\n\nThey paused to breathe, letting the quiet settle around them.\n\nGoodnight. May your dreams carry you to peaceful, magical places.",
   "settings": {
     "voice": "en-US-AriaNeural",
-    "narration_speed": "-15%",
+    "narration_speed": "-20%",
     "music_volume": 0.18,
     "narration_volume": 1.2,
-    "seconds_per_scene": 4.26,
     "resolution": "1920x1080",
     "fps": 24,
     "video_quality": 18,
-    "output_versions": ["narrated", "music_only"]
+    "output_versions": [
+      "narrated",
+      "music_only"
+    ],
+    "target_minutes": 6.0
   }
 }

@@ -4,6 +4,7 @@ import os
 import sys
 import platform
 import time
+import requests
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
@@ -470,21 +471,67 @@ class WhiskController:
             console.print(f"[red]Error setting prompt: {e}[/red]")
             return False
 
-    def set_format(self, format: ImageFormat) -> bool:
-        """Set the image format (landscape, portrait, square)."""
-        try:
-            # Click aspect ratio button (ref_39)
-            buttons = self.driver.find_elements(By.TAG_NAME, "button")
-            for btn in buttons:
-                btn_aria = btn.get_attribute("aria-label") or ""
-                if "aspect" in btn_aria.lower() or "ratio" in btn_aria.lower():
-                    btn.click()
-                    console.print(f"[green]Clicked aspect ratio button[/green]")
-                    time.sleep(0.5)
-                    # TODO: Add logic to select specific format
-                    return True
+    def set_format(self, format: ImageFormat = ImageFormat.LANDSCAPE) -> bool:
+        """Set the image format (landscape 16:9, portrait 9:16, square 1:1).
 
-            return False
+        Whisk uses a dropdown menu for aspect ratio selection.
+        """
+        # Map format to possible UI labels
+        format_labels = {
+            ImageFormat.LANDSCAPE: ["landscape", "16:9", "16 : 9", "wide"],
+            ImageFormat.PORTRAIT: ["portrait", "9:16", "9 : 16", "tall"],
+            ImageFormat.SQUARE: ["square", "1:1", "1 : 1"],
+        }
+        target_labels = format_labels.get(format, format_labels[ImageFormat.LANDSCAPE])
+
+        try:
+            # First, find and click the aspect ratio toggle/button
+            aspect_btn = None
+            buttons = self.driver.find_elements(By.TAG_NAME, "button")
+
+            for btn in buttons:
+                btn_aria = (btn.get_attribute("aria-label") or "").lower()
+                btn_text = (btn.text or "").lower()
+                inner_html = (btn.get_attribute("innerHTML") or "").lower()
+
+                # Look for aspect ratio button (may show current ratio like "16:9")
+                if ("aspect" in btn_aria or "ratio" in btn_aria or
+                    "16:9" in btn_text or "9:16" in btn_text or "1:1" in btn_text or
+                    "crop" in inner_html):
+                    aspect_btn = btn
+                    break
+
+            if not aspect_btn:
+                console.print("[yellow]Could not find aspect ratio button[/yellow]")
+                return False
+
+            # Click to open dropdown
+            aspect_btn.click()
+            console.print("[cyan]Opened aspect ratio menu[/cyan]")
+            time.sleep(1)
+
+            # Find and click the target format option
+            # Look for menu items, buttons, or list items with matching text
+            all_elements = self.driver.find_elements(By.CSS_SELECTOR,
+                "button, [role='menuitem'], [role='option'], li, mat-option, .menu-item")
+
+            for elem in all_elements:
+                elem_text = (elem.text or "").lower().strip()
+                elem_aria = (elem.get_attribute("aria-label") or "").lower()
+
+                for label in target_labels:
+                    if label in elem_text or label in elem_aria:
+                        elem.click()
+                        console.print(f"[green]Set aspect ratio to {format.value} ({label})[/green]")
+                        time.sleep(0.5)
+                        return True
+
+            # If no explicit option found, check if already selected (button may toggle)
+            console.print(f"[yellow]Could not find {format.value} option - may already be set[/yellow]")
+            # Click elsewhere to close menu
+            self.driver.find_element(By.TAG_NAME, "body").click()
+            time.sleep(0.3)
+            return True
 
         except Exception as e:
             console.print(f"[yellow]Could not set format: {e}[/yellow]")
@@ -800,10 +847,11 @@ class WhiskController:
             return downloaded
 
     def _download_images_fallback(self, output_folder: Path, prefix: str, crop: bool = True) -> list[Path]:
-        """Fallback: Screenshot the generated images directly.
+        """Fallback: Download images directly from URLs or screenshot with UI hidden.
 
-        Strategy: Whisk generates 4 result images. We capture ALL candidates, filter by size,
-        then keep ONLY THE LAST 2 large images (which are the full high-quality renders).
+        Strategy: Whisk generates 4 result images. We first try to download directly from
+        googleusercontent URLs (clean, no UI). If that fails, we hide UI overlays before
+        screenshotting to avoid capturing ANIMATE/REFINE buttons.
         """
         downloaded = []
         temp_files = []
@@ -814,6 +862,39 @@ class WhiskController:
             time.sleep(1)
             self.driver.execute_script("window.scrollTo(0, 0);")
             time.sleep(1)
+
+            # Hide ALL UI overlay elements that appear on images (buttons, icons, etc.)
+            hide_ui_script = """
+                // Hide all buttons that overlay images
+                document.querySelectorAll('button').forEach(btn => {
+                    const text = (btn.innerText || '').toUpperCase();
+                    const html = btn.innerHTML || '';
+                    if (text.includes('ANIMATE') || text.includes('REFINE') ||
+                        html.includes('thumb_up') || html.includes('thumb_down') ||
+                        html.includes('favorite') || html.includes('share') ||
+                        html.includes('download') || html.includes('arrow')) {
+                        btn.style.display = 'none';
+                    }
+                });
+                // Hide any overlay containers
+                document.querySelectorAll('[class*="overlay"], [class*="toolbar"], [class*="action"]').forEach(el => {
+                    if (el.querySelector('button')) {
+                        el.style.display = 'none';
+                    }
+                });
+                // Hide floating button groups near images
+                document.querySelectorAll('img').forEach(img => {
+                    const parent = img.parentElement;
+                    if (parent) {
+                        parent.querySelectorAll('button, [role="button"]').forEach(btn => {
+                            btn.style.display = 'none';
+                        });
+                    }
+                });
+            """
+            self.driver.execute_script(hide_ui_script)
+            time.sleep(0.5)
+            console.print("[cyan]Hidden UI overlays for clean capture[/cyan]")
 
             # Find all images - prioritize those in result/output containers
             result_images = self.driver.find_elements(By.CSS_SELECTOR,
@@ -838,7 +919,20 @@ class WhiskController:
                         filename = f"{prefix}_{timestamp}_{i+1}.png"
                         filepath = output_folder / filename
 
-                        # Take screenshot
+                        # Try direct download first for googleusercontent URLs (cleaner)
+                        if "googleusercontent" in src and not src.startswith("blob:"):
+                            try:
+                                response = requests.get(src, timeout=30)
+                                if response.status_code == 200 and len(response.content) > 50000:
+                                    with open(filepath, 'wb') as f:
+                                        f.write(response.content)
+                                    temp_files.append(filepath)
+                                    console.print(f"[dim]Direct download: {filename}[/dim]")
+                                    continue
+                            except Exception as e:
+                                console.print(f"[dim]Direct download failed, using screenshot: {e}[/dim]")
+
+                        # Fallback: Take screenshot (UI should be hidden now)
                         img.screenshot(str(filepath))
                         temp_files.append(filepath)
 

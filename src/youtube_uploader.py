@@ -290,6 +290,67 @@ class YouTubeUploader:
             console.print(f"[yellow]Thumbnail upload failed (may require channel verification): {e}[/yellow]")
             return False
 
+    def update_video_metadata(
+        self,
+        video_id: str,
+        title: str = None,
+        description: str = None,
+        tags: List[str] = None,
+        thumbnail_path: str = None,
+    ) -> bool:
+        """Update metadata and/or thumbnail for an existing video.
+
+        Args:
+            video_id: YouTube video ID to update.
+            title: New title (optional).
+            description: New description (optional).
+            tags: New tags list (optional).
+            thumbnail_path: Path to new thumbnail (optional).
+
+        Returns:
+            True if update was successful.
+        """
+        try:
+            # Get current video details
+            response = self.service.videos().list(
+                part="snippet",
+                id=video_id
+            ).execute()
+
+            if not response.get("items"):
+                console.print(f"[red]Video {video_id} not found[/red]")
+                return False
+
+            snippet = response["items"][0]["snippet"]
+
+            # Update only provided fields
+            if title:
+                snippet["title"] = title
+            if description:
+                snippet["description"] = description
+            if tags:
+                snippet["tags"] = tags
+
+            # Push metadata update
+            self.service.videos().update(
+                part="snippet",
+                body={
+                    "id": video_id,
+                    "snippet": snippet
+                }
+            ).execute()
+            console.print(f"[green]Metadata updated for video {video_id}[/green]")
+
+            # Update thumbnail if provided
+            if thumbnail_path:
+                self.set_thumbnail(video_id, thumbnail_path)
+
+            return True
+
+        except HttpError as e:
+            console.print(f"[red]Update failed: {e}[/red]")
+            return False
+
     def get_upload_schedule(
         self,
         frequency: str = "daily",
