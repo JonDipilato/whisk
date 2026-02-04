@@ -56,6 +56,28 @@ else:
     def header(msg): print(f"\n{'='*60}\n  {msg}\n{'='*60}")
 
 
+def parse_scene_spec(spec: str, max_scene: int) -> list[int]:
+    """Parse scene specification into list of scene numbers.
+
+    Supports:
+        - Single: "51" -> [51]
+        - Range: "51-55" -> [51, 52, 53, 54, 55]
+        - List: "51,53,60" -> [51, 53, 60]
+        - Mixed: "51,53-55,60" -> [51, 53, 54, 55, 60]
+    """
+    scenes = set()
+    for part in spec.split(","):
+        part = part.strip()
+        if "-" in part:
+            start, end = part.split("-", 1)
+            start, end = int(start.strip()), int(end.strip())
+            scenes.update(range(start, end + 1))
+        else:
+            scenes.add(int(part))
+    # Filter to valid range and sort
+    return sorted(s for s in scenes if 1 <= s <= max_scene)
+
+
 # Theme-specific colors for click-optimized thumbnails
 THUMBNAIL_STYLES = {
     "mushroom": {"accent": "#FF9F43", "glow": "#FFA502", "bg_tint": (255, 159, 67)},
@@ -97,6 +119,8 @@ class StoryVideoMaker:
                 status(f"Auto-detected episode folder: {detected_dir.name}", "cyan")
             else:
                 self.output_dir = self.root / "output"
+                status("[yellow]WARNING: Could not detect episode folder from config, using ./output[/yellow]")
+                status("[yellow]Consider using --output-dir to specify the correct location[/yellow]")
         self.chars_dir = self.root / "data" / "characters"
         self.envs_dir = self.root / "data" / "environments"
         self.audio_dir = self.output_dir / "audio"
@@ -299,9 +323,15 @@ class StoryVideoMaker:
     # =========================================================================
     # STEP 2: Generate scene images using references
     # =========================================================================
-    def generate_scenes(self):
-        header(f"STEP 2: Generating {len(self.config['scenes'])} Scene Images")
+    def generate_scenes(self, force_scenes: list[int] = None):
+        """Generate scene images using Whisk.
 
+        Args:
+            force_scenes: Optional list of specific scene numbers to regenerate.
+                         When provided, ONLY these scenes are processed (existing
+                         images are cleared first). When None, auto-detects which
+                         scenes need generation.
+        """
         from src.config import load_config
         from src.whisk_controller import WhiskController
         from src.models import ImageFormat
@@ -311,21 +341,43 @@ class StoryVideoMaker:
         scenes = self.config["scenes"]
         scene_refs = self.config.get("scene_refs")
 
-        # Check which scenes already have images
-        scenes_to_generate = []
-        for i, scene_prompt in enumerate(scenes, 1):
-            scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
-            if scene_dir.exists():
-                images = list(scene_dir.glob("*.png")) + list(scene_dir.glob("*.webp"))
-                if images and max(img.stat().st_size for img in images) > 30000:
-                    continue  # Already has good images
-            scenes_to_generate.append((i, scene_prompt))
+        # Determine which scenes to generate
+        if force_scenes:
+            # Force-regenerate specific scenes
+            header(f"STEP 2: Regenerating {len(force_scenes)} Specific Scene(s)")
+            scenes_to_generate = []
+            for i in force_scenes:
+                if 1 <= i <= len(scenes):
+                    scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
+                    # Clear existing images to force fresh generation
+                    if scene_dir.exists():
+                        for img in scene_dir.glob("*.png"):
+                            img.unlink()
+                        for img in scene_dir.glob("*.webp"):
+                            img.unlink()
+                        status(f"Cleared existing images in scene_{i:03d}_batch_1")
+                    scenes_to_generate.append((i, scenes[i - 1]))
+                else:
+                    error(f"Scene {i} out of range (1-{len(scenes)})")
+            status(f"Will regenerate scenes: {', '.join(str(s) for s in force_scenes)}")
+        else:
+            # Auto-detect which scenes need generation
+            header(f"STEP 2: Generating {len(self.config['scenes'])} Scene Images")
+            scenes_to_generate = []
+            for i, scene_prompt in enumerate(scenes, 1):
+                scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
+                if scene_dir.exists():
+                    images = list(scene_dir.glob("*.png")) + list(scene_dir.glob("*.webp"))
+                    if images and max(img.stat().st_size for img in images) > 30000:
+                        continue  # Already has good images
+                scenes_to_generate.append((i, scene_prompt))
 
         if not scenes_to_generate:
             success("All scene images already generated!")
             return True
 
-        status(f"{len(scenes_to_generate)} scenes need generation (skipping {len(scenes) - len(scenes_to_generate)} already done)")
+        if not force_scenes:
+            status(f"{len(scenes_to_generate)} scenes need generation (skipping {len(scenes) - len(scenes_to_generate)} already done)")
 
         controller = WhiskController(app_config)
 
@@ -550,6 +602,8 @@ class StoryVideoMaker:
                 scenes_to_generate.append((idx, narr_text, scene_audio))
 
         # Generate all scenes in one async batch (fixes Windows asyncio issues)
+        tts_errors = []
+
         async def _generate_all_scenes():
             for idx, text, out_path in scenes_to_generate:
                 if text and text.strip():
@@ -557,14 +611,10 @@ class StoryVideoMaker:
                         communicate = edge_tts.Communicate(text.strip(), voice=voice, rate=rate)
                         await communicate.save(str(out_path))
                     except Exception as e:
-                        status(f"  Scene {idx+1} TTS error: {e}")
-                        # Create silent fallback
-                        subprocess.run([
-                            "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
-                            "-t", "0.5", "-q:a", "9", str(out_path)
-                        ], capture_output=True)
+                        tts_errors.append((idx + 1, str(e)))
+                        error(f"  Scene {idx+1} TTS FAILED: {e}")
                 else:
-                    # Create silent audio for scenes without narration (0.5s)
+                    # Create silent audio for scenes without narration (0.5s) - this is intentional
                     subprocess.run([
                         "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
                         "-t", "0.5", "-q:a", "9", str(out_path)
@@ -580,7 +630,18 @@ class StoryVideoMaker:
             status(f"  Generating {len(scenes_to_generate)} new scene audio files...")
             asyncio.run(_generate_all_scenes())
 
+            # Fail-fast: error if TTS failed for any scenes
+            if tts_errors:
+                error(f"TTS generation failed for {len(tts_errors)} scene(s):")
+                for scene_num, err_msg in tts_errors[:5]:
+                    error(f"  Scene {scene_num}: {err_msg}")
+                if len(tts_errors) > 5:
+                    error(f"  ...and {len(tts_errors) - 5} more")
+                error("Check your internet connection and edge-tts installation")
+                sys.exit(1)
+
         # Get durations for all scenes
+        duration_errors = []
         for idx, scene_audio in enumerate(audio_files):
             if scene_audio.exists():
                 result = subprocess.run([
@@ -589,12 +650,19 @@ class StoryVideoMaker:
                 ], capture_output=True, text=True)
                 try:
                     dur = float(result.stdout.strip())
-                except:
-                    dur = 0.5
+                except (ValueError, AttributeError):
+                    duration_errors.append(idx + 1)
+                    dur = 0.0
             else:
-                dur = 0.5
+                duration_errors.append(idx + 1)
+                dur = 0.0
 
             scene_durations.append(dur)
+
+        # Fail-fast: error if duration detection failed
+        if duration_errors:
+            error(f"Could not get duration for {len(duration_errors)} audio file(s): scenes {duration_errors[:10]}")
+            sys.exit(1)
 
             if (idx + 1) % 20 == 0:
                 status(f"  Generated {idx + 1}/{len(scene_narrations)} scene audios...")
@@ -672,10 +740,13 @@ class StoryVideoMaker:
         scenes = self.config["scenes"]
         images = []
         scene_indices = []  # Track which scene index each image corresponds to
+        missing_folders = []
+        empty_folders = []
+
         for i in range(1, len(scenes) + 1):
             scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
             if not scene_dir.exists():
-                status(f"[yellow]Warning: scene_{i:03d}_batch_1 folder missing[/yellow]")
+                missing_folders.append(f"scene_{i:03d}_batch_1")
                 continue
             candidates = (
                 list(scene_dir.glob("*.png")) +
@@ -687,7 +758,24 @@ class StoryVideoMaker:
                 images.append(best)
                 scene_indices.append(i - 1)  # 0-indexed for duration array
             else:
-                status(f"[yellow]Warning: scene_{i:03d}_batch_1 folder empty[/yellow]")
+                empty_folders.append(f"scene_{i:03d}_batch_1")
+
+        # Fail-fast: error if scenes are missing
+        if missing_folders or empty_folders:
+            error_msg = []
+            if missing_folders:
+                error_msg.append(f"Missing scene folders: {', '.join(missing_folders[:10])}")
+                if len(missing_folders) > 10:
+                    error_msg.append(f"  ...and {len(missing_folders) - 10} more")
+            if empty_folders:
+                error_msg.append(f"Empty scene folders: {', '.join(empty_folders[:10])}")
+                if len(empty_folders) > 10:
+                    error_msg.append(f"  ...and {len(empty_folders) - 10} more")
+            error("\n".join(error_msg))
+            error(f"Expected {len(scenes)} scenes, found {len(images)} valid images")
+            error("Run scene generation first or check your output directory")
+            sys.exit(1)
+
         self._scene_indices = scene_indices  # Store for duration matching
         return images
 
@@ -935,20 +1023,29 @@ class StoryVideoMaker:
             return False
 
         # CRITICAL: Map durations to actual images using scene indices
-        # (handles missing scenes like scene 69 being empty)
         if scene_durations and hasattr(self, '_scene_indices'):
             # Build matched durations list - one duration per actual image
             matched_durations = []
+            missing_duration_indices = []
             for scene_idx in self._scene_indices:
                 if scene_idx < len(scene_durations):
                     matched_durations.append(scene_durations[scene_idx])
                 else:
-                    matched_durations.append(secs_per_scene)  # fallback
+                    missing_duration_indices.append(scene_idx + 1)  # 1-indexed for display
+
+            # Fail-fast: error if durations don't match
+            if missing_duration_indices:
+                error(f"Duration data missing for scenes: {missing_duration_indices[:10]}")
+                error(f"scene_durations.json has {len(scene_durations)} entries, but scene indices go up to {max(self._scene_indices) + 1}")
+                sys.exit(1)
+
             if len(matched_durations) != len(all_images):
-                error(f"Duration matching failed: {len(matched_durations)} durations for {len(all_images)} images")
-            else:
-                scene_durations = matched_durations
-                status(f"Matched {len(scene_durations)} durations to {len(all_images)} images")
+                error(f"Duration count mismatch: {len(matched_durations)} durations != {len(all_images)} images")
+                error("This indicates a bug in duration matching logic")
+                sys.exit(1)
+
+            scene_durations = matched_durations
+            status(f"Matched {len(scene_durations)} durations to {len(all_images)} images")
 
         encoder_msg = f"GPU ({self.encoder})" if self.use_gpu else f"CPU ({self.encoder})"
         status(f"Found {len(all_images)} scene images, building with transitions...")
@@ -1211,7 +1308,13 @@ class StoryVideoMaker:
     # =========================================================================
     # STEP 6: Generate YouTube metadata + thumbnail
     # =========================================================================
-    def generate_metadata_and_thumbnail(self):
+    def generate_metadata_and_thumbnail(self, episode_override: int = None):
+        """Generate YouTube metadata and thumbnail.
+
+        Args:
+            episode_override: Optional episode number to use instead of config value.
+                            Used by --fix-episode to correct wrong episode numbers.
+        """
         header("STEP 6: Generating YouTube Metadata & Thumbnail")
 
         from src.youtube_metadata import YouTubeMetadataGenerator, generate_chapters
@@ -1228,7 +1331,7 @@ class StoryVideoMaker:
         style = self.config.get("style", "Studio Ghibli anime style")
         # Use story title as custom_title so it doesn't get overwritten by templates
         custom_title = story_title if story_title else self.config.get("custom_title")
-        episode = self.config.get("episode")
+        episode = episode_override if episode_override else self.config.get("episode")
         description_text = self.config.get("description")
 
         # Generate chapter timestamps based on scene count
@@ -1351,8 +1454,8 @@ class StoryVideoMaker:
         meta_gen.save_metadata(metadata, metadata_path)
         success(f"Metadata saved: {metadata_path.name}")
 
-        # Generate thumbnail
-        self._generate_thumbnail(metadata.title)
+        # Generate thumbnail (pass episode override for correct badge)
+        self._generate_thumbnail(metadata.title, episode_override=episode)
 
         return metadata
 
@@ -1421,7 +1524,7 @@ class StoryVideoMaker:
         img = enhancer.enhance(brightness_boost)
         return img
 
-    def _generate_thumbnail(self, title):
+    def _generate_thumbnail(self, title, episode_override: int = None):
         """Create a click-optimized thumbnail for YouTube.
 
         Features:
@@ -1430,6 +1533,10 @@ class StoryVideoMaker:
         - Episode badge
         - Theme-specific accent colors
         - Enhanced saturation for visibility
+
+        Args:
+            title: Video title for the thumbnail text.
+            episode_override: Optional episode number override for the badge.
         """
         try:
             from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -1508,8 +1615,8 @@ class StoryVideoMaker:
             subtitle_font = title_font
             badge_font = title_font
 
-        # Draw episode badge (top-left)
-        episode_num = self.config.get("episode")
+        # Draw episode badge (top-left) - use override if provided
+        episode_num = episode_override if episode_override else self.config.get("episode")
         if episode_num:
             self._draw_episode_badge(draw, episode_num, (30, 30), badge_font)
 
@@ -1519,9 +1626,8 @@ class StoryVideoMaker:
         # Clean up any underscores in the title
         main_title = main_title.replace("_", " ").title()
         subtitle = "A Bedtime Story"
-        episode_suffix = self.config.get("episode")
-        if episode_suffix:
-            subtitle = f"Episode {episode_suffix}"
+        if episode_num:
+            subtitle = f"Episode {episode_num}"
 
         # Word-wrap main title
         max_width = 1180  # Full width minus margins
@@ -1586,10 +1692,17 @@ class StoryVideoMaker:
     # =========================================================================
     # STEP 7: Upload to YouTube (optional)
     # =========================================================================
-    def upload_to_youtube(self, schedule_hours=None):
+    def upload_to_youtube(self, schedule_hours=None, immediate=False):
+        """Upload video to YouTube with auto-scheduling.
+
+        Args:
+            schedule_hours: Deprecated - use auto-scheduler instead.
+            immediate: If True, publish immediately (bypass auto-scheduler).
+        """
         header("STEP 7: Uploading to YouTube")
 
         from src.youtube_uploader import YouTubeUploader
+        from src.schedule_tracker import ScheduleTracker
 
         uploader = YouTubeUploader()
         if not uploader.authenticate():
@@ -1611,31 +1724,49 @@ class StoryVideoMaker:
         thumbnail_path = self.output_dir / "thumbnails" / "youtube_thumbnail.png"
         thumb = str(thumbnail_path) if thumbnail_path.exists() else None
 
+        # Determine scheduling
+        schedule_datetime = None
+        if not immediate and not schedule_hours:
+            # Use auto-scheduler
+            tracker = ScheduleTracker()
+            schedule_datetime = tracker.get_next_publish_date(uploader.service)
+            status(f"Auto-scheduling for: {schedule_datetime.strftime('%b %d, %Y at %H:%M UTC')} (6 PM EST)")
+
+        video_title = self.config["title"]
+
         if metadata_path.exists():
             video_id = uploader.upload_with_metadata_file(
                 video_path=str(video_path),
                 metadata_path=str(metadata_path),
                 thumbnail_path=thumb,
                 schedule_hours=schedule_hours,
+                schedule_datetime=schedule_datetime,
             )
         else:
             video_id = uploader.upload(
                 video_path=str(video_path),
-                title=self.config["title"],
+                title=video_title,
                 description=self.config.get("description", ""),
                 tags=["bedtime stories", "kids", "ghibli", "animated stories"],
                 thumbnail_path=thumb,
                 schedule_hours=schedule_hours,
+                schedule_datetime=schedule_datetime,
             )
 
         if video_id:
             success(f"Uploaded: https://www.youtube.com/watch?v={video_id}")
+
+            # Advance the schedule tracker
+            if schedule_datetime and not immediate:
+                tracker = ScheduleTracker()
+                tracker.advance_schedule(schedule_datetime, video_id, video_title)
+
         return video_id
 
     # =========================================================================
     # MAIN RUN
     # =========================================================================
-    def run(self, skip_whisk=False, upload=False, schedule_hours=None):
+    def run(self, skip_whisk=False, upload=False, schedule_hours=None, upload_immediate=False):
         header(f"STORY VIDEO MAKER: {self.config['title']}")
         status(f"Characters: {', '.join(c['name'] for c in self.config['characters'])}")
         status(f"Scene: {self.config['scene']['name']}")
@@ -1677,7 +1808,7 @@ class StoryVideoMaker:
         # Step 7: Upload (optional)
         if upload:
             print()
-            self.upload_to_youtube(schedule_hours=schedule_hours)
+            self.upload_to_youtube(schedule_hours=schedule_hours, immediate=upload_immediate)
 
         elapsed = (datetime.now() - start).total_seconds()
         print()
@@ -1713,17 +1844,165 @@ if __name__ == "__main__":
                         help="Only regenerate YouTube metadata + thumbnail")
     parser.add_argument("--update-video", type=str, default=None,
                         help="Update metadata/thumbnail for existing YouTube video (provide video ID)")
+    parser.add_argument("--scene", type=str, default=None,
+                        help="Regenerate specific scenes only. Accepts: single (51), range (51-55), or list (51,53,60)")
+    parser.add_argument("--fix-episode", type=int, default=None,
+                        help="Override episode number when using --update-video (fixes wrong episode in description)")
+    parser.add_argument("--list-videos", action="store_true",
+                        help="List recent YouTube uploads with video IDs")
+    parser.add_argument("--fix-title", type=str, default=None,
+                        help="Override video title when using --update-video (use with --fix-episode)")
+    parser.add_argument("--reschedule-all", action="store_true",
+                        help="Reschedule all 16 videos to publish 1/day at 6 PM EST starting Feb 5")
+    parser.add_argument("--upload-now", action="store_true",
+                        help="Upload and publish immediately (bypass auto-scheduler)")
+    parser.add_argument("--set-schedule", type=str, default=None,
+                        help="Set next publish date (YYYY-MM-DD format, e.g., 2026-02-21)")
+    parser.add_argument("--schedule-status", action="store_true",
+                        help="Show current schedule status and next publish date")
 
     args = parser.parse_args()
     maker = StoryVideoMaker(config_path=args.config, output_dir=args.output_dir)
 
     upload = args.upload or args.schedule is not None
 
-    if args.update_video:
+    if args.schedule_status:
+        # Show current schedule status
+        from src.schedule_tracker import ScheduleTracker
+        tracker = ScheduleTracker()
+        next_date, last_video, last_title = tracker.get_status()
+        header("Schedule Status")
+        if next_date:
+            status(f"Next publish: {next_date.strftime('%b %d, %Y at %H:%M UTC')} (6 PM EST)")
+        else:
+            status("No schedule set - will query YouTube API on next upload")
+        if last_video:
+            status(f"Last scheduled: {last_title or 'Unknown'} ({last_video})")
+        sys.exit(0)
+
+    if args.set_schedule:
+        # Manually set the next publish date
+        from src.schedule_tracker import ScheduleTracker
+        tracker = ScheduleTracker()
+        if tracker.set_next_date(args.set_schedule):
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    if args.reschedule_all:
+        # Reschedule all 16 videos to publish 1/day at 6 PM EST starting Feb 5
+        from src.youtube_uploader import YouTubeUploader
+        from src.schedule_tracker import ScheduleTracker
+        from datetime import datetime, timedelta, timezone
+
+        # Video IDs in episode order
+        videos = [
+            ("ZRSHUptsiDk", "Coral Dream Cove"),
+            ("h8PvFF6xQiM", "Drift Off with Everbloom Sanctuary Dreams"),
+            ("jJpz51Yp-nc", "Starfall Valley A Magical Bedtime Story"),
+            ("DvO0Rkl3xXc", "A Night in the Everbloom Sanctuary"),
+            ("qBPW4eeq2-w", "Luna's Journey to the Starfall Valley"),
+            ("U9b3RsNihI0", "Luna's Journey to the Spore Hollow"),
+            ("5pUT9qmqYnE", "A Night in the Coral Dream Cove"),
+            ("JAYjK74pFc8", "Luna's Journey to the Frost Whisper Peaks"),
+            ("jEb36LcL-uU", "The Sunbell Melody"),
+            ("ZmT6Sh4TNsM", "Frost Whisper Peaks"),
+            ("01LwAndVyAw", "Luna's Starfall Valley Adventure"),
+            ("kqLRwmg77PA", "The Cloud-Thread Kite"),
+            ("av1xJy02GYE", "The Sun-Thread Bell"),
+            ("zBe-pRvymnk", "The Humming Starseed"),
+            ("7H2yif89Gpg", "The Humming Mapstone"),
+            ("MOHnTeSX6FA", "The Humming Pebble Path"),
+        ]
+
+        # Start: Feb 5, 2026 at 6 PM EST = 23:00 UTC
+        start = datetime(2026, 2, 5, 23, 0, 0, tzinfo=timezone.utc)
+
+        uploader = YouTubeUploader()
+        if uploader.authenticate():
+            last_publish = None
+            last_video = None
+            last_title = None
+            for i, (vid_id, title) in enumerate(videos):
+                publish_at = start + timedelta(days=i)
+                print(f"Scheduling Ep {i+1}: {title} -> {publish_at.strftime('%b %d, %Y %H:%M UTC')}")
+                uploader.reschedule_video(vid_id, publish_at)
+                last_publish = publish_at
+                last_video = vid_id
+                last_title = title
+
+            # Update tracker to the day after the last scheduled video
+            tracker = ScheduleTracker()
+            tracker.advance_schedule(last_publish, last_video, last_title)
+            success("All 16 videos rescheduled!")
+        sys.exit(0)
+
+    if args.list_videos:
+        # List recent YouTube uploads with video IDs
+        from src.youtube_uploader import YouTubeUploader
+        uploader = YouTubeUploader()
+        if uploader.authenticate():
+            videos = uploader.list_my_uploads(max_results=20)
+            if videos:
+                print("\n  Recent YouTube Uploads:")
+                print("  " + "-" * 80)
+                for v in videos:
+                    print(f"  ID: {v['video_id']}")
+                    print(f"      Title: {v['title']}")
+                    print(f"      Date:  {v['published_at'][:10]}")
+                    print()
+            else:
+                print("  No videos found")
+        sys.exit(0)
+    elif args.update_video and args.fix_title:
+        # Quick fix: directly update YouTube title and episode WITHOUT regenerating
+        import re
+        from src.youtube_uploader import YouTubeUploader
+
+        uploader = YouTubeUploader()
+        if uploader.authenticate():
+            # Get current video details
+            response = uploader.service.videos().list(
+                part="snippet",
+                id=args.update_video
+            ).execute()
+
+            if not response.get("items"):
+                error(f"Video {args.update_video} not found")
+                sys.exit(1)
+
+            snippet = response["items"][0]["snippet"]
+            old_title = snippet["title"]
+            old_desc = snippet["description"]
+
+            # Update title
+            snippet["title"] = args.fix_title
+
+            # Fix episode in description if --fix-episode provided
+            if args.fix_episode:
+                snippet["description"] = re.sub(
+                    r'Episode \d+',
+                    f'Episode {args.fix_episode}',
+                    old_desc
+                )
+
+            # Push update
+            uploader.service.videos().update(
+                part="snippet",
+                body={"id": args.update_video, "snippet": snippet}
+            ).execute()
+
+            success(f"Updated: '{old_title}' → '{args.fix_title}'")
+            if args.fix_episode:
+                success(f"Episode number fixed to: {args.fix_episode}")
+        sys.exit(0)
+    elif args.update_video:
         # Regenerate metadata/thumbnail and update existing YouTube video
-        maker.generate_metadata_and_thumbnail()
+        # Pass episode override so thumbnail and metadata use correct episode number
+        maker.generate_metadata_and_thumbnail(episode_override=args.fix_episode)
         from src.youtube_uploader import YouTubeUploader
         import json
+        import re
 
         uploader = YouTubeUploader()
         if uploader.authenticate():
@@ -1731,6 +2010,20 @@ if __name__ == "__main__":
             metadata_path = maker.videos_dir / "youtube_metadata.json"
             if metadata_path.exists():
                 meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+                # Fix episode number in description if --fix-episode provided
+                # (metadata generator already used the override, but double-check description)
+                if args.fix_episode:
+                    description = meta.get("description", "")
+                    # Replace "Episode N" with correct episode number
+                    description = re.sub(
+                        r'Episode \d+',
+                        f'Episode {args.fix_episode}',
+                        description
+                    )
+                    meta["description"] = description
+                    status(f"Fixed episode number to: Episode {args.fix_episode}")
+
                 thumb_path = maker.output_dir / "thumbnails" / "youtube_thumbnail.png"
                 uploader.update_video_metadata(
                     video_id=args.update_video,
@@ -1744,7 +2037,7 @@ if __name__ == "__main__":
     elif args.metadata_only:
         maker.generate_metadata_and_thumbnail()
     elif args.upload_only:
-        maker.upload_to_youtube(schedule_hours=args.schedule)
+        maker.upload_to_youtube(schedule_hours=args.schedule, immediate=args.upload_now)
     elif args.video_only:
         narration = maker.generate_narration()
         music = maker.get_music_path()
@@ -1752,6 +2045,16 @@ if __name__ == "__main__":
             maker.assemble_videos(narration, music)
         maker.generate_metadata_and_thumbnail()
         if upload:
-            maker.upload_to_youtube(schedule_hours=args.schedule)
+            maker.upload_to_youtube(schedule_hours=args.schedule, immediate=args.upload_now)
+    elif args.scene:
+        # Regenerate specific scenes only
+        max_scenes = len(maker.config["scenes"])
+        force_scenes = parse_scene_spec(args.scene, max_scenes)
+        if not force_scenes:
+            error(f"No valid scenes in range 1-{max_scenes} from spec: {args.scene}")
+            sys.exit(1)
+        status(f"Regenerating {len(force_scenes)} scene(s): {', '.join(str(s) for s in force_scenes)}")
+        maker.generate_scenes(force_scenes=force_scenes)
+        success(f"Scene regeneration complete. Run with --video-only to rebuild videos.")
     else:
-        maker.run(skip_whisk=args.skip_whisk, upload=upload, schedule_hours=args.schedule)
+        maker.run(skip_whisk=args.skip_whisk, upload=upload, schedule_hours=args.schedule, upload_immediate=args.upload_now)

@@ -166,6 +166,7 @@ class YouTubeUploader:
         privacy: str = "private",
         thumbnail_path: Optional[str] = None,
         schedule_hours: Optional[int] = None,
+        schedule_datetime: Optional[datetime] = None,
         made_for_kids: bool = False,  # Default False - limits features when True
     ) -> Optional[str]:
         """Upload a video to YouTube.
@@ -179,6 +180,7 @@ class YouTubeUploader:
             privacy: Privacy status (private, unlisted, public).
             thumbnail_path: Path to custom thumbnail image.
             schedule_hours: Hours from now to publish (sets privacy to private until then).
+            schedule_datetime: Specific UTC datetime to publish (overrides schedule_hours).
             made_for_kids: Whether the video is made for kids.
 
         Returns:
@@ -195,7 +197,10 @@ class YouTubeUploader:
 
         # Determine publish time
         publish_at = None
-        if schedule_hours and schedule_hours > 0:
+        if schedule_datetime:
+            privacy = "private"
+            publish_at = schedule_datetime.strftime("%Y-%m-%dT%H:%M:%S.0Z")
+        elif schedule_hours and schedule_hours > 0:
             privacy = "private"
             publish_at = (datetime.now(timezone.utc) + timedelta(hours=schedule_hours)).isoformat()
 
@@ -351,6 +356,55 @@ class YouTubeUploader:
             console.print(f"[red]Update failed: {e}[/red]")
             return False
 
+    def list_my_uploads(self, max_results: int = 20) -> List[dict]:
+        """List recent uploads from the authenticated channel.
+
+        Args:
+            max_results: Maximum number of videos to return.
+
+        Returns:
+            List of video info dicts with id, title, publishedAt, description snippet.
+        """
+        if not self.service:
+            if not self.authenticate():
+                return []
+
+        try:
+            # First get the channel's upload playlist ID
+            channels_response = self.service.channels().list(
+                part="contentDetails",
+                mine=True
+            ).execute()
+
+            if not channels_response.get("items"):
+                console.print("[red]No channel found[/red]")
+                return []
+
+            uploads_playlist_id = channels_response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+            # Get videos from the uploads playlist
+            videos = []
+            playlist_response = self.service.playlistItems().list(
+                part="snippet",
+                playlistId=uploads_playlist_id,
+                maxResults=max_results
+            ).execute()
+
+            for item in playlist_response.get("items", []):
+                snippet = item["snippet"]
+                videos.append({
+                    "video_id": snippet["resourceId"]["videoId"],
+                    "title": snippet["title"],
+                    "published_at": snippet["publishedAt"],
+                    "description": snippet["description"][:100] + "..." if len(snippet["description"]) > 100 else snippet["description"]
+                })
+
+            return videos
+
+        except HttpError as e:
+            console.print(f"[red]Failed to list uploads: {e}[/red]")
+            return []
+
     def get_upload_schedule(
         self,
         frequency: str = "daily",
@@ -390,12 +444,49 @@ class YouTubeUploader:
 
         return schedule
 
+    def reschedule_video(self, video_id: str, publish_at: datetime) -> bool:
+        """Reschedule a video's publish time.
+
+        Args:
+            video_id: YouTube video ID
+            publish_at: Datetime in UTC for scheduled publish
+
+        Returns:
+            True if successful
+        """
+        if not self.service:
+            if not self.authenticate():
+                return False
+
+        try:
+            # Format datetime for YouTube API (ISO 8601)
+            publish_at_str = publish_at.strftime("%Y-%m-%dT%H:%M:%S.0Z")
+
+            self.service.videos().update(
+                part="status",
+                body={
+                    "id": video_id,
+                    "status": {
+                        "privacyStatus": "private",
+                        "publishAt": publish_at_str
+                    }
+                }
+            ).execute()
+
+            console.print(f"[green]Scheduled {video_id} for {publish_at_str}[/green]")
+            return True
+
+        except HttpError as e:
+            console.print(f"[red]Reschedule failed: {e}[/red]")
+            return False
+
     def upload_with_metadata_file(
         self,
         video_path: str,
         metadata_path: str,
         thumbnail_path: Optional[str] = None,
         schedule_hours: Optional[int] = None,
+        schedule_datetime: Optional[datetime] = None,
     ) -> Optional[str]:
         """Upload a video using a saved metadata JSON file.
 
@@ -404,6 +495,7 @@ class YouTubeUploader:
             metadata_path: Path to youtube_metadata.json.
             thumbnail_path: Optional thumbnail override.
             schedule_hours: Hours from now to publish.
+            schedule_datetime: Specific UTC datetime to publish (overrides schedule_hours).
 
         Returns:
             Video ID if successful.
@@ -425,4 +517,5 @@ class YouTubeUploader:
             privacy=meta.get("privacy_status", "private"),
             thumbnail_path=thumbnail_path,
             schedule_hours=schedule_hours,
+            schedule_datetime=schedule_datetime,
         )
