@@ -1,451 +1,620 @@
 {
-  "title": "Frost Whisper Peaks - Episode 11",
-  "description": "Two friends discover Frost Whisper Peaks and help restore its fading magic",
-  "episode": 11,
-  "theme": "winter",
-  "seed": 275927154,
+  "title": "The Kite of Cloud Strings",
+  "description": "A shy sky-kite made of cloud strings tumbles into the village at dawn. Luna and Kai follow its silvery thread through bright places and breezy heights, helping it find the wind-song that carries it safely home.",
+  "profile": "glm_generated",
+  "episode": 20,
   "characters": [
     {
-      "name": "Maple",
-      "description": "Anime character, tied in a ponytail white hair, deep green eyes, wearing a tunic with leaf patterns, carrying a worn leather satchel, a small blue bird nearby, dreamy and imaginative expression, Ghibli style, white background",
-      "code": "C1"
+      "name": "Luna",
+      "description": "Young girl with flowing silver hair and bright blue eyes, wearing a soft lavender dress with a small glowing lantern, gentle curious expression, Studio Ghibli anime style, white background",
+      "code": "C1",
+      "image_path": "data/characters/luna_01.png"
+    },
+    {
+      "name": "Kai",
+      "description": "Young boy with messy brown hair and warm amber eyes, wearing a forest green tunic with a tiny orange fox companion on his shoulder, adventurous friendly smile, Studio Ghibli anime style, white background",
+      "code": "C2",
+      "image_path": "data/characters/kai_01.png"
     },
     {
       "name": "Fox",
-      "description": "Anime character, short messy dark brown hair, violet eyes, wearing a cozy knit sweater over shorts, carrying a compass that points to magic, a friendly firefly swarm nearby, clever and resourceful expression, Ghibli style, white background",
-      "code": "C2"
+      "description": "Tiny orange fox with fluffy tail and bright curious eyes, playful expression, soft fur with white chest patch, Studio Ghibli anime style, white background",
+      "code": "C3",
+      "image_path": "data/characters/fox_01.png"
     }
   ],
-  "scene": {
-    "name": "Frost Whisper Peaks",
-    "description": "Wide landscape of mountain peaks where aurora borealis touches the snow, ice caves with frozen music, snow foxes with glowing fur, hot springs surrounded by crystal ice formations, pine forests dusted with starlight, Ghibli style",
-    "image_path": "output\\episodes\\episode_11_winter_20260130_144733\\refs\\frost_whisper_peaks.png"
+  "environments": {
+    "E2": {
+      "name": "saffron_path_fields",
+      "description": "Wide sunny fields of tall grass and wildflowers, a winding dirt path, fluttering butterflies, and distant hills under a brightening sky",
+      "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_saffron_path_fields.png"
+    },
+    "E3": {
+      "name": "tanglefern_hollow",
+      "description": "A cool leafy hollow with ferns, mossy logs, dappled sunbeams, and a gentle breeze that whispers through hanging vines",
+      "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_tanglefern_hollow.png"
+    },
+    "E4": {
+      "name": "ribbonstone_creek",
+      "description": "A clear creek curling over smooth stones, tiny ripples sparkling in daylight, with a small wooden footbridge and reeds swaying softly",
+      "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_ribbonstone_creek.png"
+    },
+    "E5": {
+      "name": "skyneedle_ridge",
+      "description": "A high rocky ridge with pale stone spires, open views, circling birds, and steady winds that hum like a quiet song",
+      "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_skyneedle_ridge.png"
+    },
+    "E6": {
+      "name": "moonwarm_hearth_hall",
+      "description": "A snug village hall with wooden beams, soft blankets, warm lamplight, and a big window where twilight and stars can be seen",
+      "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_moonwarm_hearth_hall.png"
+    }
   },
-  "style": "Studio Ghibli anime style",
+  "scene": {
+    "name": "saffron_path_fields",
+    "description": "Wide sunny fields of tall grass and wildflowers, a winding dirt path, fluttering butterflies, and distant hills under a brightening sky",
+    "image_path": "output\\episodes\\luna_kai_ep20_20260205_215712/refs/env_saffron_path_fields.png"
+  },
   "scenes": [
-    "Peaceful evening in a small village, warm lights in windows, cold but cozy sky above, Studio Ghibli anime style",
-    "character with tied in a ponytail white hair looking out window at something magical in the distance, wonder in their eyes, Studio Ghibli anime style",
-    "character with short messy dark brown hair and a friendly firefly swarm running excitedly through the village toward the magical sight, Studio Ghibli anime style",
-    "Two friends meeting at the village edge at dusk, ready for adventure, Studio Ghibli anime style",
-    "Two children walking along a winding path at night, one carrying a worn leather satchel, Studio Ghibli anime style",
-    "Path opening to reveal Frost Whisper Peaks for the first time, mountain peaks where aurora borealis touches the snow, ice caves with frozen mus, children gasping in awe, Studio Ghibli anime style",
-    "Children carefully entering Frost Whisper Peaks, surrounded by aurora borealis, magical atmosphere, Studio Ghibli anime style",
-    "Close-up of aurora borealis, beautiful and ethereal, child reaching out to touch, Studio Ghibli anime style",
-    "a friendly firefly swarm playfully exploring ice caves, curious and delighted, Studio Ghibli anime style",
-    "Children discovering snow foxes up close, kneeling in wonder, soft light, Studio Ghibli anime style",
-    "Child gently interacting with snow foxes, it responds with light, magical connection, Studio Ghibli anime style",
-    "hot springs stretching across the landscape, beautiful and inviting, Studio Ghibli anime style",
-    "Children following hot springs, adventurous expressions, magical landscape around, Studio Ghibli anime style",
-    "Both children exploring together, laughing, frozen waterfalls around them, Studio Ghibli anime style",
-    "Arriving at the heart of Frost Whisper Peaks, most beautiful spot, ancient and powerful, Studio Ghibli anime style",
-    "The heart of Frost Whisper Peaks revealed in full glory, breathtaking vista, Studio Ghibli anime style",
-    "Local magical creatures appearing, curious about the children, friendly and glowing, Studio Ghibli anime style",
-    "Creatures interacting with character with tied in a ponytail white hair, landing on outstretched hands, trusting, Studio Ghibli anime style",
-    "a friendly firefly swarm playing with local creatures, creating light trails together, Studio Ghibli anime style",
-    "Children discovering a hidden garden of ice caves, each one unique and beautiful, Studio Ghibli anime style",
-    "Children helping to tend snow foxes, gentle and careful, rewarding work, Studio Ghibli anime style",
-    "New growth appearing where children helped, small miracle of nature, Studio Ghibli anime style",
-    "Local creatures celebrating the new growth, dancing with joy, festive, Studio Ghibli anime style",
-    "Child climbing to a high viewpoint, looking out over all of Frost Whisper Peaks, panoramic, Studio Ghibli anime style",
-    "Beautiful panoramic view of Frost Whisper Peaks from above, all aurora borealis visible, breathtaking, Studio Ghibli anime style",
-    "Children following a hidden path deeper into Frost Whisper Peaks, determined expressions, Studio Ghibli anime style",
-    "Crossing a natural bridge over a gap, brave moment, frozen waterfalls below, Studio Ghibli anime style",
-    "Arriving at the most ancient part of Frost Whisper Peaks, powerful and awe-inspiring, Studio Ghibli anime style",
-    "Children noticing something is wrong, aurora borealis dimming, worry on faces, Studio Ghibli anime style",
-    "Hidden entrance to the source of Frost Whisper Peaks's power, ancient symbols glowing faintly, Studio Ghibli anime style",
-    "Children entering the ancient chamber at Frost Whisper Peaks's core, walls with glowing symbols, Studio Ghibli anime style",
-    "Inside a vast space, the source of power visible but clearly damaged, Studio Ghibli anime style",
-    "The damaged power source shown in detail, cracks and fading light, something is very wrong, Studio Ghibli anime style",
-    "Children looking worried, creatures gathered around looking sad, the problem is clear, Studio Ghibli anime style",
-    "Ancient images on walls showing Frost Whisper Peaks in its full glory, understanding the history, Studio Ghibli anime style",
-    "Images showing how the power source connects to everything in Frost Whisper Peaks, Studio Ghibli anime style",
-    "Child placing a found element near the damaged source, first attempt to help, Studio Ghibli anime style",
-    "Power source responding to the offering, tiny spark of healing light, hope, Studio Ghibli anime style",
-    "a friendly firefly swarm rushing out to gather more helpful elements, determined, Studio Ghibli anime style",
-    "Creatures joining the effort, bringing pieces of ice caves to help, teamwork, Studio Ghibli anime style",
-    "Power source growing stronger with each offering, healing visible, Studio Ghibli anime style",
-    "Everyone working together, children and creatures united, beautiful cooperation, Studio Ghibli anime style",
-    "Final big effort, children lifting something important together, straining but hopeful, Studio Ghibli anime style",
-    "Placing the final piece, massive surge of brilliant light, everyone shielding eyes, Studio Ghibli anime style",
-    "Wave of restored magic bursting outward from the source, spreading everywhere, Studio Ghibli anime style",
-    "Children emerging to see Frost Whisper Peaks transformed, brighter and more magical than ever, Studio Ghibli anime style",
-    "aurora borealis growing more vibrant and numerous, spreading across the landscape, Studio Ghibli anime style",
-    "frozen waterfalls more beautiful now, moving in graceful patterns, renewed energy, Studio Ghibli anime style",
-    "New growth everywhere, snow foxes blooming in every color, carpet of beauty, Studio Ghibli anime style",
-    "The centerpiece of Frost Whisper Peaks now twice as magnificent, restored to full power, Studio Ghibli anime style",
-    "Hundreds of creatures filling the air in celebration, creating patterns of light, Studio Ghibli anime style",
-    "a friendly firefly swarm dancing joyfully among the renewed ice caves, pure happiness, Studio Ghibli anime style",
-    "Children sitting together peacefully, watching the celebration, content smiles, Studio Ghibli anime style",
-    "Creatures showing gratitude to the children, gentle gifts of light, Studio Ghibli anime style",
-    "Child receiving a small keepsake from Frost Whisper Peaks, a crystal seed or glowing token, Studio Ghibli anime style",
-    "Grand celebration, all creatures dancing in synchronized beauty, spectacular, Studio Ghibli anime style",
-    "Children joining the celebration, carried by magic, floating slightly, pure joy, Studio Ghibli anime style",
-    "The ancient center at its brightest, sending light into the sky, connecting everything, Studio Ghibli anime style",
-    "New elements being born from the renewed power, floating upward, beautiful cycle, Studio Ghibli anime style",
-    "Dawn beginning to lighten the horizon, celebration becoming softer, golden hour, Studio Ghibli anime style",
-    "First light touching aurora borealis, colors shifting to warm golden tones, transition, Studio Ghibli anime style",
-    "Creatures gently guiding children toward the path home, bittersweet farewell, Studio Ghibli anime style",
-    "Children hugging creatures goodbye, a friendly firefly swarm looking back, farewell, Studio Ghibli anime style",
-    "Children climbing back up the path, looking back at Frost Whisper Peaks one more time, Studio Ghibli anime style",
-    "Frost Whisper Peaks growing smaller behind them but still glowing softly in dawn light, Studio Ghibli anime style",
-    "Walking back through the approach path, sunrise filtering through, world feels different, Studio Ghibli anime style",
-    "a friendly firefly swarm sleepy and content, riding on shoulder, tired from adventure, Studio Ghibli anime style",
-    "Child's a worn leather satchel now glowing with Frost Whisper Peaks's magic, a piece kept forever, Studio Ghibli anime style",
-    "Village appearing ahead as morning sun rises fully, familiar and welcoming, Studio Ghibli anime style",
-    "Children walking through quiet morning village, everyone asleep, their secret, Studio Ghibli anime style",
-    "Child planting the keepsake in their garden, bringing magic home, Studio Ghibli anime style",
-    "Other child placing glowing token on windowsill, room lit with soft magical light, Studio Ghibli anime style",
-    "Both children waving to each other from windows, smiling, friendship, Studio Ghibli anime style",
-    "Garden keepsake already sprouting tiny magical growth, magic spreading, Studio Ghibli anime style",
-    "Final wide shot: village at sunrise, one tiny magical glow in a garden, stars fading, promise of return, Studio Ghibli anime style"
+    "Wide establishing shot of Starfell Village at soft dawn, stone cottages with thin chimney smoke, dew sparkling on garden leaves, pale pink sky turning gold behind a small bell tower, quiet lanes and sleepy rooftops, Ghibli suffix",
+    "Close-up of Luna outdoors beside a low garden gate, silver hair shining in gentle sunrise, holding her lantern with both hands, watching a faint silvery thread drifting past like a loose ribbon, soft morning light, Ghibli suffix",
+    "Medium shot of Kai in the village lane with his tiny orange fox, both looking up as something pale flutters above the rooftops, warm sunrise glow on cobblestones, fox tail flicking, Ghibli suffix",
+    "Wide shot of the market square empty and calm, a pale kite-shaped bundle of cloudlike fabric snagged on a low fence, silvery string trailing across wet stones, sun just peeking over roofs, Ghibli suffix",
+    "Close-up of Luna kneeling near the fence, lantern resting beside her, careful fingers lifting the cloudlike kite fabric, tiny droplets sparkling on it, gentle curious expression, soft morning light, Ghibli suffix",
+    "Close-up of Kai crouching nearby with fox at his heel, examining the silvery string coiled around a fence post, fox sniffing, sunlight warming the scene, Ghibli suffix",
+    "Medium shot of Luna and Kai together in the square, holding the kite between them, no fox present, lantern hanging from Luna’s hand, both looking at the string pointing out of the village like an arrow, golden sunrise, Ghibli suffix",
+    "Wide shot of a village path leading out past gardens and low stone walls, Luna and Kai walking away with the kite cradled and its string gathered neatly, morning light brightening, long soft shadows, Ghibli suffix",
+    "Travel moment along a narrow dirt lane between hedges and wildflowers, Luna and Kai moving forward, kite tucked under Kai’s arm, lantern swinging lightly, birds flitting ahead in the brightening morning, Ghibli suffix",
+    "Wide establishing shot of Saffron Path Fields under late morning light, tall grasses waving in bright sun, scattered wildflowers, distant hills, a pale thread glinting along the path, Ghibli suffix",
+    "Entry scene with Luna and Kai stepping into the fields, no fox present, Luna holding lantern and a bundle of silvery string, Kai carrying the cloud kite, butterflies drifting around them, warm daylight, Ghibli suffix",
+    "Close-up of Luna alone, lantern tucked close, noticing the kite’s fabric puff and relax like a tiny breathing cloud, her fingertips smoothing a crease, bright late morning light, Ghibli suffix",
+    "Medium shot of Kai solo with fox, jogging a few steps ahead along the path, fox bounding through grass tips, Kai holding the string spool carefully, sunlight flashing on the silvery line, Ghibli suffix",
+    "Wide shot of the path bending toward a darker dip in the land, grasses giving way to thicker ferns, Luna and Kai together slowing as the breeze cools, kite held steady, Ghibli suffix",
+    "Departure scene at the edge of the fields, Luna and Kai walking toward a ferny opening, no fox present, sun high and warm behind them, grass seeds floating like tiny feathers, Ghibli suffix",
+    "Travel moment through a narrow green corridor of shrubs and young trees, dappled late morning light on the ground, Luna’s lantern bobbing, Kai holding the kite close, leaves whispering, Ghibli suffix",
+    "Wide establishing shot of Tanglefern Hollow, lush ferns and mossy logs, hanging vines swaying, sunbeams slanting in bright early afternoon, a small pool reflecting sky, Ghibli suffix",
+    "Entry scene with Luna and Kai entering the hollow, no fox present, careful steps over roots, kite fabric catching dappled light, silvery string trailing neatly in Luna’s hand, Ghibli suffix",
+    "Close-up of Kai solo with fox beside a mossy log, fox pawing at a vine that has looped around the kite string, Kai reaching to loosen it, bright early afternoon light, Ghibli suffix",
+    "Close-up of Luna solo kneeling by the small pool, lantern light faint in daylight, dipping fingertips to rinse a muddy spot from the kite’s edge, water rippling with soft plinks, Ghibli suffix",
+    "Medium shot of Luna and Kai together under swaying vines, no fox present, noticing the string trembling in a new direction toward a distant sparkle, both turning their bodies to follow, early afternoon sun, Ghibli suffix",
+    "Wide shot of a creek glinting beyond the hollow, ferny banks opening to bright water, Luna and Kai approaching carefully with the kite, early afternoon light reflecting in flashes, Ghibli suffix",
+    "Departure scene leaving Tanglefern Hollow, Luna and Kai walking out between ferns toward the sound of running water, no fox present, early afternoon sun strong overhead, Ghibli suffix",
+    "Travel moment along a pebbly track beside water, bright daylight, small stones crunching underfoot, Luna holding lantern and string, Kai carrying the kite, reeds swishing in the breeze, Ghibli suffix",
+    "Wide establishing shot of Ribbonstone Creek, clear water curling around smooth rocks, a simple wooden footbridge, sunlight sparkling like scattered coins, dragonflies hovering, Ghibli suffix",
+    "Entry scene with Luna and Kai stepping onto the wooden footbridge, no fox present, kite held steady between them, silvery string stretching forward and dipping toward the water’s edge, bright afternoon light, Ghibli suffix",
+    "Close-up of Luna solo at the bridge railing, lantern in one hand, the other hand holding the string as it slips and brushes the water, her face focused and calm, bright afternoon sparkle, Ghibli suffix",
+    "Medium shot of Kai solo with fox on the creek bank, fox balancing on a flat stone, Kai gathering loose coils of string into a neat loop, sunlight warm, water burbling nearby, Ghibli suffix",
+    "Wide shot of Luna and Kai together on the far side of the creek, no fox present, noticing a strong breeze coming from a rocky rise ahead, kite fabric lifting slightly, afternoon light beginning to soften, Ghibli suffix",
+    "Close-up of the kite in Kai’s arms, cloudlike fabric trembling as the wind pulls, silvery thread humming, small droplets on the string catching light, no faces, tactile detail, Ghibli suffix",
+    "Departure scene from Ribbonstone Creek, Luna and Kai walking uphill along a stony trail, no fox present, afternoon light turning warmer, long grasses bending in wind, Ghibli suffix",
+    "Travel moment on a switchback trail with scattered stones and low shrubs, Luna’s lantern glinting, Kai gripping the kite and string, sky wide and bright, shadows lengthening into afternoon, Ghibli suffix",
+    "Wide establishing shot of Skyneedle Ridge in afternoon light, pale rock spires pointing upward, open cliffside views, wind-blown grasses, distant clouds moving fast, no characters, Ghibli suffix",
+    "Entry scene with Luna and Kai stepping onto the ridge, no fox present, holding the kite between them as it pulls upward, golden afternoon light, grasses whipping gently, Ghibli suffix",
+    "Close-up of Luna solo bracing her feet on rock, lantern hanging from her wrist, carefully feeding out a little silvery string, hair streaming in wind, afternoon light warm on her face, Ghibli suffix",
+    "Medium shot of Kai solo with fox crouched beside him behind a rock, Kai checking a small knot on the string, fox pressing close to stay out of the wind, sun lowering toward golden hour, Ghibli suffix",
+    "Wide shot of Luna and Kai together attempting to lift the kite, no fox present, kite rising then wobbling as wind shifts, their arms adjusting, long afternoon shadows on stone, Ghibli suffix",
+    "Close-up of the kite string snagging around a sharp rock edge, fibers stretched, the kite tugging in the air, dust lifting in wind, tense detail, Ghibli suffix",
+    "Medium shot of Luna and Kai together kneeling by the snag, no fox present, Luna shielding the string with her hand while Kai tries to lift it free, warm afternoon light turning golden, Ghibli suffix",
+    "Close-up of Luna solo placing her lantern on the ground and using a smooth flat pebble as a guard between string and rock, her fingers steady, golden hour glow, Ghibli suffix",
+    "Medium shot of Kai solo with fox, Kai holding the string taut while the fox nudges the pebble into place with its nose, wind fluttering Kai’s hair, late afternoon light, Ghibli suffix",
+    "Wide shot of Luna and Kai together standing again, no fox present, lifting the kite into a steadier wind pocket, the kite rising higher with a smooth arc, late afternoon sun warming the ridge, Ghibli suffix",
+    "Wide establishing shot of the ridge sky, clouds moving fast, the kite now high above as a pale diamond, string shining in warm light, birds circling far away, no characters visible, Ghibli suffix",
+    "Close-up of Luna and Kai together holding the string, no fox present, feeling the steady pull, their faces relaxed, warm orange late-afternoon light on cheeks, grasses swaying behind, Ghibli suffix",
+    "Close-up of the kite’s cloud fabric fluttering, a faint swirl pattern appearing like wind-written letters, sunlight turning peach and pink, airy texture, no characters, Ghibli suffix",
+    "Wide shot of Kai solo with fox on the ridge, Kai tying the string to a rounded stone post for a moment, fox sitting neatly, sunset glow beginning, long shadows, Ghibli suffix",
+    "Medium shot of Luna solo lifting her lantern again, its warm light faint in sunset, watching the kite dip once like a bow, her silver hair glowing orange-pink, Ghibli suffix",
+    "Wide shot of Luna and Kai together, no fox present, untying the string and gently winding it, the kite drifting lower toward them as the sun nears the horizon, warm golden glow, Ghibli suffix",
+    "Departure scene from Skyneedle Ridge, Luna and Kai walking down the stony trail with the kite folded carefully, no fox present, sunset light orange and pink, distant village lights faint below, Ghibli suffix",
+    "Travel moment along the downhill path, shadows long, sky turning lavender, Luna’s lantern now glowing brighter, Kai carrying the folded kite and string, calm evening breeze, Ghibli suffix",
+    "Wide establishing shot of Moonwarm Hearth Hall at twilight, warm light spilling from windows, smoke curling from a chimney, stars beginning to appear, cozy benches outside, no characters, Ghibli suffix",
+    "Entry scene with Luna and Kai stepping inside the hall, no fox present, lantern casting warm circles on wooden floors, the kite laid gently on a folded blanket, soft lamplight, Ghibli suffix",
+    "Close-up of Luna solo smoothing the blanket around the kite, lantern beside her, warm amber light, tiny dust motes floating, her expression peaceful and caring, Ghibli suffix",
+    "Medium shot of Kai solo with fox curled at his side near the hearth, Kai winding the silvery string into a tidy coil, firelight flickering on his hands, cozy shadows, Ghibli suffix",
+    "Wide shot of Luna and Kai together sitting on cushions by the window, no fox present, lantern glowing softly, outside sky deepening to night with stars, the kite resting nearby, Ghibli suffix",
+    "Close-up of the kite on the blanket, its swirl pattern faintly glowing like moonlit chalk, string coiled neatly beside it, warm indoor light mixing with cool starlight from window, Ghibli suffix",
+    "Departure scene from the hall into the village night, Luna and Kai stepping out with lantern, no fox present, door closing gently behind, stars bright overhead, quiet street, Ghibli suffix",
+    "Travel moment along the sleepy village lane, lantern light pooling on cobblestones, Luna and Kai walking slowly, rooftops dark and peaceful, a soft breeze carrying distant crickets, Ghibli suffix",
+    "Wide establishing shot of Starfell Village at night, moonlight silver on roofs, a few windows glowing, lantern moving along a path like a tiny firefly, calm sky full of stars, Ghibli suffix",
+    "Interior close-up of Luna alone in her cozy room, setting her lantern on a bedside table, moonlight through curtains, soft blankets and a small shelf of treasures, quiet warm mood, Ghibli suffix",
+    "Interior medium shot of Kai solo with fox in his room, fox padding onto a little cushion, Kai placing a small smooth pebble on a shelf like a keepsake, lamplight low and cozy, Ghibli suffix",
+    "Wide shot of Luna and Kai together outside their neighboring cottage doors under the night sky, no fox present, sharing a quiet wave, lantern glow between them, stars sparkling overhead, Ghibli suffix",
+    "Close-up of Luna alone tucked into bed, silver hair on pillow, lantern dimmed to a soft glow on the table, curtains moving slightly in a cool breeze, peaceful nighttime shadows, Ghibli suffix",
+    "Close-up of Kai solo with fox curled against his blanket, Kai’s eyes heavy, moonlight painting gentle shapes on the wall, the fox’s tail tucked neatly, quiet night stillness, Ghibli suffix",
+    "Wide establishing shot of the village rooftops and sky, clouds drifting slowly past the moon, distant owl silhouette, all lights low and cozy, peaceful night air, Ghibli suffix",
+    "Interior wide shot of Luna’s room, lantern now barely glowing, Luna sleeping peacefully, soft blanket rise and fall, moonlight pooling on the floor, serene bedtime atmosphere, Ghibli suffix",
+    "Interior wide shot of Kai’s room, Kai asleep with fox, both still and cozy, a faint night breeze at the window, moonlight silvering the blankets, quiet comforting scene, Ghibli suffix"
   ],
   "scene_refs": [
     {
-      "character_codes": []
+      "character_codes": [],
+      "environment_code": "E1"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E1"
     },
     {
       "character_codes": [
-        "C2"
-      ]
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E1"
     },
     {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
+      "character_codes": [],
+      "environment_code": "E1"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E1"
     },
     {
       "character_codes": [
-        "C2"
-      ]
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E1"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E2"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E2"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E2"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E2"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E2"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E2"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E2"
     },
     {
-      "character_codes": []
+      "character_codes": [],
+      "environment_code": "E3"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E3"
+    },
+    {
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E3"
     },
     {
       "character_codes": [
         "C1"
-      ]
-    },
-    {
-      "character_codes": [
-        "C2"
-      ]
+      ],
+      "environment_code": "E3"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E3"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E3"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E3"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E3"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E4"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E4"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E4"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E4"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E4"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E4"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E4"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E4"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1"
-      ]
-    },
-    {
-      "character_codes": []
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E5"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E5"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E5"
     },
     {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": []
+      "character_codes": [],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E5"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": []
-    },
-    {
-      "character_codes": [
-        "C1",
-        "C2"
-      ]
-    },
-    {
-      "character_codes": [
-        "C2"
-      ]
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1"
-      ]
-    },
-    {
-      "character_codes": []
+      ],
+      "environment_code": "E5"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E5"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E5"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E5"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E6"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E6"
     },
     {
       "character_codes": [
         "C1"
-      ]
+      ],
+      "environment_code": "E6"
     },
     {
       "character_codes": [
-        "C2"
-      ]
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E6"
     },
     {
       "character_codes": [
         "C1",
         "C2"
-      ]
+      ],
+      "environment_code": "E6"
     },
     {
-      "character_codes": []
+      "character_codes": [],
+      "environment_code": "E6"
     },
     {
-      "character_codes": []
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E6"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E6"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1",
+        "C2"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C1"
+      ],
+      "environment_code": "E1"
+    },
+    {
+      "character_codes": [
+        "C2",
+        "C3"
+      ],
+      "environment_code": "E1"
     }
   ],
-  "narration": "Before the stars fully woke, Maple and Fox noticed ice caves drifting through the air, like a soft invitation.\n\nThe world held its breath, peaceful and steady.\n\nIn a quiet village where the days were gentle and the nights were full of wonder, two friends shared a bond stronger than anything the world could offer.\n\nThey listened to the silence, warm and safe.\n\nThe light lingered, and time seemed to slow.\n\nMaple, with tied in a ponytail white hair and deep green eyes, always carried a worn leather satchel. Maple was dreamy and imaginative, always looking beyond the horizon for something magical.\n\nFox was different but perfectly matched. With a friendly firefly swarm always nearby and a heart full of adventure, Fox was clever and resourceful, ready for whatever the world would bring.\n\nThe night grew deeper, and the path opened gently ahead.\n\nSoftly, the night whispered and carried them onward.\n\nOne evening, something extraordinary appeared in the distance. Without hesitation, they set out together, following the mystery beyond the village and into the unknown.\n\nThe path led them through shadows and silence, until suddenly the world opened up before them. Frost Whisper Peaks stretched out in all its glory, a place where aurora borealis shimmered with inner light, and ice caves drifted through the air like living dreams.\n\nThey paused to breathe, letting the quiet settle around them.\n\nThey explored with wide eyes and open hearts. snow foxes responded to their gentle touch, and frozen waterfalls seemed to welcome them as old friends.\n\nSoftly, the night whispered and carried them onward.\n\nFor a moment, everything was still and calm.\n\nThe journey continued, slow and steady, like a lullaby.\n\nThe light lingered, and time seemed to slow.\n\nWith each step, the world felt softer and more magical.\n\nThey moved on together, guided by the quiet glow around them.\n\nDeeper they ventured, discovering wonders at every turn. Local creatures, shy at first, grew bold enough to approach, sensing the children's kind spirits. Fox's a friendly firefly swarm made friends instantly, and soon they were all exploring together.\n\nA gentle hush drifted through the air, soft and unhurried.\n\nA quiet calm wrapped around them like a blanket.\n\nBut beauty sometimes hides sorrow. At the heart of Frost Whisper Peaks, they found its power source damaged and fading. The magic that sustained everything was slowly dying.\n\nWithout hesitation, they knew what to do. Working alongside the creatures of Frost Whisper Peaks, they gathered what was needed. Every small offering of ice caves brought a little more light back. Every act of care healed another crack.\n\nThey listened to the silence, warm and safe.\n\nA gentle hush drifted through the air, soft and unhurried.\n\nIt was not easy. It required patience, courage, and trust in each other. But together, with the help of every creature who called this place home, they restored what was broken.\n\nThe moment the power returned, Frost Whisper Peaks erupted in renewed beauty. Aurora borealis blazed brighter than ever. Frozen waterfalls danced in celebration. The very air seemed to sing with gratitude.\n\nFor a moment, everything was still and calm.\n\nThe creatures thanked them with gifts of light and crystal, small pieces of this magical place to carry forever.\n\nAs dawn painted the sky in gold and rose, Maple and Fox said their gentle goodbyes. The path home was shorter than the journey there, as paths home always are.\n\nBack in their village, the world looked the same but felt different. Maple's a worn leather satchel now held a permanent glow, and Fox planted a crystal keepsake in the garden behind their house.\n\nFrom their windows, they waved goodnight to each other. And in the garden, already, something small and magical had begun to grow.\n\nFrost Whisper Peaks would always be there, waiting for their return. And perhaps, on the quietest nights, its magic still reaches their village, carried on the wind.\n\nThey paused to breathe, letting the quiet settle around them.\n\nGoodnight. May your dreams carry you to peaceful, magical places.",
+  "scene_narrations": [
+    "Morning tiptoed into Starfell Village. Dew shone like tiny beads on every leaf, and the air smelled clean and cool.",
+    "Luna stepped outside with her lantern and listened to the quiet. A silvery thread floated by her nose, tickling the air like a whisper.",
+    "Down the lane, Kai and his little fox saw the same strange shimmer. It fluttered above the rooftops like a shy cloud trying to be a bird.",
+    "In the quiet market square, a soft white kite lay tangled on a fence. Its string stretched across the stones, glimmering like moonlight left behind.",
+    "Luna gently lifted the kite. It felt cool and silky, like a cloud that had learned to be cloth.",
+    "Kai carefully unwound the string from the fence post. The fox sniffed the thread and sneezed softly, as if it smelled like high, windy places.",
+    "Luna and Kai held the kite together. The string pulled gently toward the hills, like it was asking them to follow.",
+    "They decided to help the kite find its way. With careful steps, they left the village, the string looped safely in Luna’s hand.",
+    "The lane led them past humming flowers and sleepy bees. The kite rustled softly, like it was trying to remember the wind.",
+    "Soon the world opened into wide fields. Sunlight poured down, and the grass swayed in shining waves.",
+    "Luna and Kai walked between tall stems that brushed their knees. Butterflies floated by, and the thread sparkled each time it caught the sun.",
+    "Luna paused to smooth the kite’s crinkled edge. It puffed up a little, as if it liked being cared for.",
+    "Kai trotted ahead, keeping the string from snagging. His fox hopped beside him, quick and bright, ears flicking at every rustle.",
+    "The path curved toward a green hollow where the air felt cooler. The kite’s string tugged again, guiding them onward.",
+    "They left the bright fields behind. Tiny seeds drifted past like little parachutes, and the world ahead looked shaded and soft.",
+    "They walked through a leafy hallway of branches. Light and shadow danced on the path, and the leaves whispered as they passed.",
+    "Tanglefern Hollow waited like a green bowl in the earth. Sunbeams slipped through the leaves, and a tiny pool reflected the bright sky.",
+    "Luna and Kai stepped over roots like sleepy snakes. The kite shimmered in the sunbeams, and the string pointed deeper into the hollow.",
+    "A vine had twirled around the string like a curly ribbon. Kai and the fox worked together, gentle and patient, until the line slid free.",
+    "Luna cleaned a smudge with cool pool water. The ripples made tiny rings, and the kite looked brighter again.",
+    "The string began to tremble, like it had heard a faraway call. Luna and Kai turned together toward a sparkling sound ahead.",
+    "Through the ferns, they saw water shining. The air smelled fresh and sweet, and the kite’s cloth fluttered in the cooler breeze.",
+    "They followed the sound of the creek. Behind them, the hollow grew quiet again, like it was waving goodbye with its vines.",
+    "Their feet crunched on tiny pebbles. Reeds swished softly, and the creek’s song kept them moving forward.",
+    "Ribbonstone Creek danced over smooth stones. Sunlight glittered on the ripples, and dragonflies hummed above the water.",
+    "Luna and Kai crossed the little bridge. The string dipped and wiggled, as if it wanted to taste the cool air above the creek.",
+    "The string slid too close to the water. Luna lifted it carefully, keeping it dry and safe.",
+    "Kai made the string into tidy loops so it wouldn’t tangle. The fox balanced like a tiny acrobat, watching the water sparkle below.",
+    "On the far bank, a stronger wind brushed their cheeks. The kite lifted its corners, eager and a little wobbly.",
+    "The kite’s cloth quivered like a soft drum. The string made a tiny humming sound, as if it was trying to sing.",
+    "They left the creek behind and started climbing. The wind grew steadier, tugging the kite like a friend holding hands.",
+    "Up the trail, the world looked bigger and bluer. Their shadows stretched longer, and the air tasted crisp and clean.",
+    "Skyneedle Ridge stood tall, with stone spires pointing at the clouds. The wind here was brave and loud, but not scary—just busy.",
+    "Luna and Kai reached the ridge and held on tight. The kite tugged upward, happy to feel the open sky.",
+    "Luna planted her feet on the warm stone. She let the string slide out slowly, smooth as ribbon through her fingers.",
+    "Kai tightened a tiny knot so the string wouldn’t slip. The fox huddled near his boot, safe from the gusts, eyes bright and calm.",
+    "They raised the kite into the wind. It rose, then wobbled, as if it didn’t know the right dance steps yet.",
+    "Oh no— the string caught on a sharp rock. The kite pulled and shivered, and the thread stretched tight like a worried line.",
+    "Luna covered the string with her palm so it wouldn’t scrape. Kai gently lifted the line, both of them moving slow and careful.",
+    "Luna set her lantern down and slid a smooth pebble under the string. The pebble made a safe bridge, so the thread could glide without hurting.",
+    "Kai held the line steady. The little fox nudged the pebble just right, and the string slipped free with a soft, sweet twang.",
+    "Together they tried again. This time the kite rose smoothly, floating like a gentle cloud that finally remembered how to fly.",
+    "Up high, the kite became a bright little shape against the sky. The wind hummed around it, and it seemed to listen.",
+    "The string felt steady now, like a calm heartbeat. Luna and Kai smiled softly, proud of their careful teamwork.",
+    "A delicate swirl appeared on the kite, like the wind was drawing on it. The sky turned peachy, and the kite fluttered happily.",
+    "Kai tied the string safely for just a moment. The fox sat like a tiny guard, while the kite floated above them, calm and light.",
+    "Luna picked up her lantern and watched the kite make a slow, polite dip. It felt like a thank-you, carried on the wind.",
+    "As the sun lowered, they guided the kite down. The string wound neatly in Luna’s hands, and the kite settled close, soft and safe.",
+    "They began the walk back down the ridge. The sunset painted everything warm and sleepy, and the kite rested quietly in Kai’s arms.",
+    "Evening crept in as they walked. Luna’s lantern glowed like a small, friendly star, lighting the stones under their feet.",
+    "At twilight, Moonwarm Hearth Hall shone with cozy light. The first stars blinked awake above the roof, quiet and kind.",
+    "Inside, the air was warm and smelled like clean wood. Luna and Kai placed the kite on a blanket so it could rest.",
+    "Luna tucked the blanket around the kite like a bedtime hug. The room felt gentle, and everything grew quiet.",
+    "Kai rolled the string into a perfect, sleepy circle. The fox curled up close, warmed by the flickering light.",
+    "They sat together and listened to the quiet. Outside, the night sky turned deep and starry, and the kite lay peaceful beside them.",
+    "The kite’s soft swirl shimmered one last time, then faded into calm. It looked ready to dream about winds and wide skies.",
+    "When it was time, Luna and Kai stepped back outside. The night air was cool, and the stars watched over the village.",
+    "They walked home through quiet streets. The lantern made warm puddles of light, and the world sounded like gentle crickets and soft steps.",
+    "Starfell Village slept under a silver moon. The night was calm and safe, wrapping the houses in a soft blanket of starlight.",
+    "Luna went to her room and set the lantern down. Moonlight slipped in quietly, and her blankets looked extra fluffy.",
+    "In his room, Kai placed the smooth pebble on his shelf. The fox curled on its cushion, safe and snug, with a tiny happy sigh.",
+    "Before going fully inside, they shared a quiet goodnight wave. The stars above twinkled gently, like they were proud of the day.",
+    "Luna snuggled into bed, warm and cozy. Her lantern glowed softly, and the room felt as calm as a slow, sleepy song.",
+    "Kai lay down, and the fox curled close like a warm little puff. The moon painted soft shapes on the wall, and everything felt safe.",
+    "Above the rooftops, the moon sailed through slow clouds. The village breathed quietly, resting after a bright, windy adventure.",
+    "Luna’s eyes closed, and her breathing became slow and gentle. The lantern’s last glow watched over her like a tiny guardian.",
+    "Kai and his fox drifted into sleep together. In the quiet night, the day’s brave wind felt far away, and only soft dreams remained."
+  ],
+  "narration": "Morning tiptoed into Starfell Village. Dew shone like tiny beads on every leaf, and the air smelled clean and cool. Luna stepped outside with her lantern and listened to the quiet. A silvery thread floated by her nose, tickling the air like a whisper. Down the lane, Kai and his little fox saw the same strange shimmer. It fluttered above the rooftops like a shy cloud trying to be a bird. In the quiet market square, a soft white kite lay tangled on a fence. Its string stretched across the stones, glimmering like moonlight left behind. Luna gently lifted the kite. It felt cool and silky, like a cloud that had learned to be cloth. Kai carefully unwound the string from the fence post. The fox sniffed the thread and sneezed softly, as if it smelled like high, windy places. Luna and Kai held the kite together. The string pulled gently toward the hills, like it was asking them to follow. They decided to help the kite find its way. With careful steps, they left the village, the string looped safely in Luna’s hand. The lane led them past humming flowers and sleepy bees. The kite rustled softly, like it was trying to remember the wind. Soon the world opened into wide fields. Sunlight poured down, and the grass swayed in shining waves. Luna and Kai walked between tall stems that brushed their knees. Butterflies floated by, and the thread sparkled each time it caught the sun. Luna paused to smooth the kite’s crinkled edge. It puffed up a little, as if it liked being cared for. Kai trotted ahead, keeping the string from snagging. His fox hopped beside him, quick and bright, ears flicking at every rustle. The path curved toward a green hollow where the air felt cooler. The kite’s string tugged again, guiding them onward. They left the bright fields behind. Tiny seeds drifted past like little parachutes, and the world ahead looked shaded and soft. They walked through a leafy hallway of branches. Light and shadow danced on the path, and the leaves whispered as they passed. Tanglefern Hollow waited like a green bowl in the earth. Sunbeams slipped through the leaves, and a tiny pool reflected the bright sky. Luna and Kai stepped over roots like sleepy snakes. The kite shimmered in the sunbeams, and the string pointed deeper into the hollow. A vine had twirled around the string like a curly ribbon. Kai and the fox worked together, gentle and patient, until the line slid free. Luna cleaned a smudge with cool pool water. The ripples made tiny rings, and the kite looked brighter again. The string began to tremble, like it had heard a faraway call. Luna and Kai turned together toward a sparkling sound ahead. Through the ferns, they saw water shining. The air smelled fresh and sweet, and the kite’s cloth fluttered in the cooler breeze. They followed the sound of the creek. Behind them, the hollow grew quiet again, like it was waving goodbye with its vines. Their feet crunched on tiny pebbles. Reeds swished softly, and the creek’s song kept them moving forward. Ribbonstone Creek danced over smooth stones. Sunlight glittered on the ripples, and dragonflies hummed above the water. Luna and Kai crossed the little bridge. The string dipped and wiggled, as if it wanted to taste the cool air above the creek. The string slid too close to the water. Luna lifted it carefully, keeping it dry and safe. Kai made the string into tidy loops so it wouldn’t tangle. The fox balanced like a tiny acrobat, watching the water sparkle below. On the far bank, a stronger wind brushed their cheeks. The kite lifted its corners, eager and a little wobbly. The kite’s cloth quivered like a soft drum. The string made a tiny humming sound, as if it was trying to sing. They left the creek behind and started climbing. The wind grew steadier, tugging the kite like a friend holding hands. Up the trail, the world looked bigger and bluer. Their shadows stretched longer, and the air tasted crisp and clean. Skyneedle Ridge stood tall, with stone spires pointing at the clouds. The wind here was brave and loud, but not scary—just busy. Luna and Kai reached the ridge and held on tight. The kite tugged upward, happy to feel the open sky. Luna planted her feet on the warm stone. She let the string slide out slowly, smooth as ribbon through her fingers. Kai tightened a tiny knot so the string wouldn’t slip. The fox huddled near his boot, safe from the gusts, eyes bright and calm. They raised the kite into the wind. It rose, then wobbled, as if it didn’t know the right dance steps yet. Oh no— the string caught on a sharp rock. The kite pulled and shivered, and the thread stretched tight like a worried line. Luna covered the string with her palm so it wouldn’t scrape. Kai gently lifted the line, both of them moving slow and careful. Luna set her lantern down and slid a smooth pebble under the string. The pebble made a safe bridge, so the thread could glide without hurting. Kai held the line steady. The little fox nudged the pebble just right, and the string slipped free with a soft, sweet twang. Together they tried again. This time the kite rose smoothly, floating like a gentle cloud that finally remembered how to fly. Up high, the kite became a bright little shape against the sky. The wind hummed around it, and it seemed to listen. The string felt steady now, like a calm heartbeat. Luna and Kai smiled softly, proud of their careful teamwork. A delicate swirl appeared on the kite, like the wind was drawing on it. The sky turned peachy, and the kite fluttered happily. Kai tied the string safely for just a moment. The fox sat like a tiny guard, while the kite floated above them, calm and light. Luna picked up her lantern and watched the kite make a slow, polite dip. It felt like a thank-you, carried on the wind. As the sun lowered, they guided the kite down. The string wound neatly in Luna’s hands, and the kite settled close, soft and safe. They began the walk back down the ridge. The sunset painted everything warm and sleepy, and the kite rested quietly in Kai’s arms. Evening crept in as they walked. Luna’s lantern glowed like a small, friendly star, lighting the stones under their feet. At twilight, Moonwarm Hearth Hall shone with cozy light. The first stars blinked awake above the roof, quiet and kind. Inside, the air was warm and smelled like clean wood. Luna and Kai placed the kite on a blanket so it could rest. Luna tucked the blanket around the kite like a bedtime hug. The room felt gentle, and everything grew quiet. Kai rolled the string into a perfect, sleepy circle. The fox curled up close, warmed by the flickering light. They sat together and listened to the quiet. Outside, the night sky turned deep and starry, and the kite lay peaceful beside them. The kite’s soft swirl shimmered one last time, then faded into calm. It looked ready to dream about winds and wide skies. When it was time, Luna and Kai stepped back outside. The night air was cool, and the stars watched over the village. They walked home through quiet streets. The lantern made warm puddles of light, and the world sounded like gentle crickets and soft steps. Starfell Village slept under a silver moon. The night was calm and safe, wrapping the houses in a soft blanket of starlight. Luna went to her room and set the lantern down. Moonlight slipped in quietly, and her blankets looked extra fluffy. In his room, Kai placed the smooth pebble on his shelf. The fox curled on its cushion, safe and snug, with a tiny happy sigh. Before going fully inside, they shared a quiet goodnight wave. The stars above twinkled gently, like they were proud of the day. Luna snuggled into bed, warm and cozy. Her lantern glowed softly, and the room felt as calm as a slow, sleepy song. Kai lay down, and the fox curled close like a warm little puff. The moon painted soft shapes on the wall, and everything felt safe. Above the rooftops, the moon sailed through slow clouds. The village breathed quietly, resting after a bright, windy adventure. Luna’s eyes closed, and her breathing became slow and gentle. The lantern’s last glow watched over her like a tiny guardian. Kai and his fox drifted into sleep together. In the quiet night, the day’s brave wind felt far away, and only soft dreams remained.",
+  "style": "",
   "settings": {
     "voice": "en-US-AriaNeural",
-    "narration_speed": "-20%",
+    "narration_speed": "-15%",
     "music_volume": 0.18,
     "narration_volume": 1.2,
     "resolution": "1920x1080",
@@ -454,7 +623,6 @@
     "output_versions": [
       "narrated",
       "music_only"
-    ],
-    "target_minutes": 6.0
+    ]
   }
 }

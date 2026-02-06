@@ -25,7 +25,7 @@ import shutil
 import asyncio
 import subprocess
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 # Add project root to path
@@ -349,11 +349,9 @@ class StoryVideoMaker:
             for i in force_scenes:
                 if 1 <= i <= len(scenes):
                     scene_dir = self.output_dir / f"scene_{i:03d}_batch_1"
-                    # Clear existing images to force fresh generation
+                    # Clear ALL existing images to force fresh generation (no leftovers)
                     if scene_dir.exists():
-                        for img in scene_dir.glob("*.png"):
-                            img.unlink()
-                        for img in scene_dir.glob("*.webp"):
+                        for img in list(scene_dir.glob("*.png")) + list(scene_dir.glob("*.webp")) + list(scene_dir.glob("*.jpg")):
                             img.unlink()
                         status(f"Cleared existing images in scene_{i:03d}_batch_1")
                     scenes_to_generate.append((i, scenes[i - 1]))
@@ -380,6 +378,8 @@ class StoryVideoMaker:
             status(f"{len(scenes_to_generate)} scenes need generation (skipping {len(scenes) - len(scenes_to_generate)} already done)")
 
         controller = WhiskController(app_config)
+        max_scene_retries = 3
+        failed_scenes = []
 
         if scene_refs:
             # Per-scene character ref switching
@@ -394,11 +394,7 @@ class StoryVideoMaker:
                     single_env_path = sp
 
             for scene_idx, scene_prompt in scenes_to_generate:
-                scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
-                scene_dir.mkdir(parents=True, exist_ok=True)
-
                 full_prompt = f"{scene_prompt}, {style}" if style else scene_prompt
-                status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
 
                 # Look up refs for this scene
                 ref_info = scene_refs[scene_idx - 1]
@@ -421,44 +417,61 @@ class StoryVideoMaker:
                     # Single environment (Luna/Kai style)
                     env_path = single_env_path
 
-                try:
-                    controller.start()
-                    time.sleep(3)
+                scene_ok = False
+                for attempt in range(1, max_scene_retries + 1):
+                    scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
+                    scene_dir.mkdir(parents=True, exist_ok=True)
 
-                    # Set 16:9 landscape aspect ratio for all scenes
-                    controller.set_format(ImageFormat.LANDSCAPE)
-                    time.sleep(1)
+                    if attempt > 1:
+                        status(f"Scene {scene_idx} retry {attempt}/{max_scene_retries}...")
+                        # Clear failed images before retry (all formats)
+                        for img in list(scene_dir.glob("*.png")) + list(scene_dir.glob("*.webp")) + list(scene_dir.glob("*.jpg")):
+                            img.unlink()
+                        time.sleep(5)
+                    else:
+                        status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
 
-                    # Upload scene-specific references
-                    # Only upload when there are characters — the controller
-                    # relies on subject uploads to locate the SCENE file input.
-                    # C0 scenes (no characters) use prompt-only generation;
-                    # their prompts already contain full visual descriptions.
-                    if char_files_for_scene:
-                        controller.upload_all_images(
-                            char_paths=char_files_for_scene,
-                            env_path=env_path if env_path and env_path.exists() else None,
-                        )
+                    try:
+                        controller.start()
+                        time.sleep(3)
+
+                        # Set 16:9 landscape aspect ratio for all scenes
+                        controller.set_format(ImageFormat.LANDSCAPE)
+                        time.sleep(1)
+
+                        # Upload scene-specific references
+                        if char_files_for_scene:
+                            controller.upload_all_images(
+                                char_paths=char_files_for_scene,
+                                env_path=env_path if env_path and env_path.exists() else None,
+                            )
+                            time.sleep(2)
+
+                        # Set prompt and generate
+                        controller.set_prompt(full_prompt)
+                        time.sleep(1)
+                        controller.generate()
+                        controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+
+                        # Download results
+                        downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
+                        if downloaded:
+                            success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                            scene_ok = True
+                        else:
+                            error(f"Scene {scene_idx}: No images downloaded (attempt {attempt}/{max_scene_retries})")
+
+                    except Exception as e:
+                        error(f"Scene {scene_idx} error (attempt {attempt}/{max_scene_retries}): {e}")
+                    finally:
+                        controller.stop()
                         time.sleep(2)
 
-                    # Set prompt and generate
-                    controller.set_prompt(full_prompt)
-                    time.sleep(1)
-                    controller.generate()
-                    controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+                    if scene_ok:
+                        break
 
-                    # Download results
-                    downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
-                    if downloaded:
-                        success(f"Scene {scene_idx}: {len(downloaded)} images saved")
-                    else:
-                        error(f"Scene {scene_idx}: No images downloaded")
-
-                except Exception as e:
-                    error(f"Scene {scene_idx} error: {e}")
-                finally:
-                    controller.stop()
-                    time.sleep(2)
+                if not scene_ok:
+                    failed_scenes.append(scene_idx)
         else:
             # Existing path: same refs for all scenes
             char_files = []
@@ -477,45 +490,68 @@ class StoryVideoMaker:
                 return False
 
             for scene_idx, scene_prompt in scenes_to_generate:
-                scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
-                scene_dir.mkdir(parents=True, exist_ok=True)
-
                 full_prompt = f"{scene_prompt}, {style}" if style else scene_prompt
-                status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
 
-                try:
-                    controller.start()
-                    time.sleep(3)
+                scene_ok = False
+                for attempt in range(1, max_scene_retries + 1):
+                    scene_dir = self.output_dir / f"scene_{scene_idx:03d}_batch_1"
+                    scene_dir.mkdir(parents=True, exist_ok=True)
 
-                    # Set 16:9 landscape aspect ratio for all scenes
-                    controller.set_format(ImageFormat.LANDSCAPE)
-                    time.sleep(1)
-
-                    # Upload character and environment references
-                    controller.upload_all_images(
-                        char_paths=char_files,
-                        env_path=scene_path,
-                    )
-                    time.sleep(2)
-
-                    # Set prompt and generate
-                    controller.set_prompt(full_prompt)
-                    time.sleep(1)
-                    controller.generate()
-                    controller.wait_for_generation(timeout=app_config.generation.download_timeout)
-
-                    # Download results
-                    downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
-                    if downloaded:
-                        success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                    if attempt > 1:
+                        status(f"Scene {scene_idx} retry {attempt}/{max_scene_retries}...")
+                        for img in list(scene_dir.glob("*.png")) + list(scene_dir.glob("*.webp")):
+                            img.unlink()
+                        time.sleep(5)
                     else:
-                        error(f"Scene {scene_idx}: No images downloaded")
+                        status(f"Scene {scene_idx}/{len(scenes)}: {scene_prompt[:60]}...")
 
-                except Exception as e:
-                    error(f"Scene {scene_idx} error: {e}")
-                finally:
-                    controller.stop()
-                    time.sleep(2)
+                    try:
+                        controller.start()
+                        time.sleep(3)
+
+                        # Set 16:9 landscape aspect ratio for all scenes
+                        controller.set_format(ImageFormat.LANDSCAPE)
+                        time.sleep(1)
+
+                        # Upload character and environment references
+                        controller.upload_all_images(
+                            char_paths=char_files,
+                            env_path=scene_path,
+                        )
+                        time.sleep(2)
+
+                        # Set prompt and generate
+                        controller.set_prompt(full_prompt)
+                        time.sleep(1)
+                        controller.generate()
+                        controller.wait_for_generation(timeout=app_config.generation.download_timeout)
+
+                        # Download results
+                        downloaded = controller.download_images(scene_dir, prefix=f"scene_{scene_idx:03d}")
+                        if downloaded:
+                            success(f"Scene {scene_idx}: {len(downloaded)} images saved")
+                            scene_ok = True
+                        else:
+                            error(f"Scene {scene_idx}: No images downloaded (attempt {attempt}/{max_scene_retries})")
+
+                    except Exception as e:
+                        error(f"Scene {scene_idx} error (attempt {attempt}/{max_scene_retries}): {e}")
+                    finally:
+                        controller.stop()
+                        time.sleep(2)
+
+                    if scene_ok:
+                        break
+
+                if not scene_ok:
+                    failed_scenes.append(scene_idx)
+
+        # Warn about failed scenes (don't abort — hours of generation shouldn't be thrown away)
+        if failed_scenes:
+            scene_spec = ",".join(str(s) for s in failed_scenes)
+            error(f"{len(failed_scenes)} scene(s) failed after {max_scene_retries} attempts each: {failed_scenes}")
+            error(f"Fix with: python run_story.py --scene {scene_spec}")
+            return False
 
         return True
 
@@ -1724,11 +1760,18 @@ class StoryVideoMaker:
         thumbnail_path = self.output_dir / "thumbnails" / "youtube_thumbnail.png"
         thumb = str(thumbnail_path) if thumbnail_path.exists() else None
 
-        # Determine scheduling
+        # Determine scheduling — normalize everything to schedule_datetime
+        tracker = ScheduleTracker()
         schedule_datetime = None
-        if not immediate and not schedule_hours:
+
+        if immediate:
+            pass  # No scheduling
+        elif schedule_hours:
+            # Convert --schedule N hours to an absolute datetime
+            schedule_datetime = datetime.now(timezone.utc) + timedelta(hours=schedule_hours)
+            status(f"Scheduling {schedule_hours}h from now: {schedule_datetime.strftime('%b %d, %Y at %H:%M UTC')}")
+        else:
             # Use auto-scheduler
-            tracker = ScheduleTracker()
             schedule_datetime = tracker.get_next_publish_date(uploader.service)
             status(f"Auto-scheduling for: {schedule_datetime.strftime('%b %d, %Y at %H:%M UTC')} (6 PM EST)")
 
@@ -1739,7 +1782,6 @@ class StoryVideoMaker:
                 video_path=str(video_path),
                 metadata_path=str(metadata_path),
                 thumbnail_path=thumb,
-                schedule_hours=schedule_hours,
                 schedule_datetime=schedule_datetime,
             )
         else:
@@ -1749,17 +1791,15 @@ class StoryVideoMaker:
                 description=self.config.get("description", ""),
                 tags=["bedtime stories", "kids", "ghibli", "animated stories"],
                 thumbnail_path=thumb,
-                schedule_hours=schedule_hours,
                 schedule_datetime=schedule_datetime,
             )
 
         if video_id:
             success(f"Uploaded: https://www.youtube.com/watch?v={video_id}")
 
-            # Advance the schedule tracker
+            # Advance the schedule tracker after any scheduled upload
             if schedule_datetime and not immediate:
-                tracker = ScheduleTracker()
-                tracker.advance_schedule(schedule_datetime, video_id, video_title)
+                tracker.advance_schedule(schedule_datetime, video_id, video_title, youtube_service=uploader.service)
 
         return video_id
 

@@ -1,10 +1,9 @@
 """
 =================================================================
-  GLM STORY GENERATOR (Luna & Kai)
+  AI STORY GENERATOR (Luna & Kai)
 
-  Uses Z.ai GLM-4.7 API to generate unique episodes with the same
-  quality structure as the grandma Excel sheet, but featuring
-  Luna & Kai with unique environments per episode.
+  Uses OpenAI API to generate unique episodes featuring Luna & Kai
+  with unique environments per episode.
 
   HOW TO USE:
      python glm_story_generator.py              # Generate config only
@@ -12,7 +11,7 @@
      python glm_story_generator.py --dry-run    # Preview without API call
 
   REQUIRES:
-     .env file with GLM_API_KEY=your_key_here
+     .env file with OPENAI_API_KEY=your_key_here
 =================================================================
 """
 
@@ -136,6 +135,62 @@ def load_api_key() -> str:
     return key
 
 
+def load_all_titles() -> list[str]:
+    """Load ALL episode titles from history for uniqueness checking."""
+    if not HISTORY_FILE.exists():
+        return []
+
+    titles = []
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    entry = json.loads(line)
+                    title = entry.get("title", "").strip()
+                    if title:
+                        titles.append(title)
+                except json.JSONDecodeError:
+                    continue
+    return titles
+
+
+def is_title_unique(title: str, existing_titles: list[str]) -> bool:
+    """Check if a title is sufficiently unique vs existing titles.
+
+    Returns False if:
+    - Exact match (case-insensitive)
+    - Near-duplicate (SequenceMatcher >= 0.85)
+    - 80%+ word overlap
+    """
+    import difflib
+
+    title_lower = title.lower().strip()
+    title_words = set(title_lower.split())
+
+    for existing in existing_titles:
+        existing_lower = existing.lower().strip()
+
+        # Exact match
+        if title_lower == existing_lower:
+            return False
+
+        # Near-duplicate via SequenceMatcher
+        ratio = difflib.SequenceMatcher(None, title_lower, existing_lower).ratio()
+        if ratio >= 0.85:
+            return False
+
+        # Word overlap check
+        existing_words = set(existing_lower.split())
+        if title_words and existing_words:
+            overlap = len(title_words & existing_words)
+            max_len = max(len(title_words), len(existing_words))
+            if max_len > 0 and overlap / max_len >= 0.80:
+                return False
+
+    return True
+
+
 def load_recent_episodes(n: int = 3) -> list[dict]:
     """Load the last N episodes from history for uniqueness checking."""
     if not HISTORY_FILE.exists():
@@ -154,7 +209,7 @@ def load_recent_episodes(n: int = 3) -> list[dict]:
     return episodes[-n:] if len(episodes) >= n else episodes
 
 
-def build_glm_prompt(recent_episodes: list[dict], theme_hint: Optional[str] = None, target_minutes: float = 10) -> str:
+def build_glm_prompt(recent_episodes: list[dict], theme_hint: Optional[str] = None, target_minutes: float = 10, all_titles: list[str] = None) -> str:
     """Build the system prompt for GLM to generate a unique story."""
 
     # List recent environments to avoid
@@ -162,6 +217,13 @@ def build_glm_prompt(recent_episodes: list[dict], theme_hint: Optional[str] = No
     for ep in recent_episodes:
         avoid_envs.extend(ep.get("environments", []))
     avoid_str = ", ".join(avoid_envs) if avoid_envs else "none"
+
+    # Build titles-to-avoid string
+    titles_to_avoid = all_titles or []
+    if titles_to_avoid:
+        titles_str = ", ".join(f'"{t}"' for t in titles_to_avoid[-20:])  # Last 20 to fit context
+    else:
+        titles_str = ""
 
     theme_str = f"Theme hint: {theme_hint}" if theme_hint else "Choose a unique adventure theme"
 
@@ -257,6 +319,8 @@ TITLE REQUIREMENTS (YouTube-optimized, NO episode numbers):
 - Keep it short (3-6 words), magical, and intriguing
 - NO "Episode X" or numbers in the title
 - Focus on the adventure/destination, not "Luna and Kai go to..."
+- Vary your title structure — do NOT start multiple titles with the same word
+{'- AVOID these recently used titles (do NOT reuse or closely resemble): ' + titles_str if titles_str else ''}
 
 OUTPUT FORMAT (strict JSON only, no markdown):
 {{
@@ -392,12 +456,12 @@ def call_llm_api(prompt: str, provider: str = "openai", api_key: str = "", max_r
 # VALIDATION
 # =============================================================================
 
-def validate_story(story_data: dict) -> tuple[bool, list[str]]:
+def validate_story(story_data: dict, history_titles: list[str] = None) -> tuple[bool, list[str]]:
     """Validate the generated story meets requirements."""
     errors = []
 
-    # Check required fields
-    required = ["episode_title", "environments", "scenes", "narration"]
+    # Check required fields (narration can be top-level OR per-scene)
+    required = ["episode_title", "environments", "scenes"]
     for field in required:
         if field not in story_data:
             errors.append(f"Missing required field: {field}")
@@ -417,21 +481,45 @@ def validate_story(story_data: dict) -> tuple[bool, list[str]]:
         if env_code and env_code not in env_codes:
             errors.append(f"Scene {i+1} uses undefined environment: {env_code}")
 
-    # Check character codes are valid
-    valid_char_codes = {"C1", "C2", "C3"}
+    # Check character codes are valid (normalize pipe-delimited strings from LLM)
+    valid_char_codes = {"C0", "C1", "C2", "C3"}
     for i, scene in enumerate(story_data["scenes"]):
-        for code in scene.get("character_codes", []):
+        raw_codes = scene.get("character_codes", [])
+        # LLM sometimes returns "C1|C2" as a string or ["C1|C2"] instead of ["C1", "C2"]
+        if isinstance(raw_codes, str):
+            raw_codes = [c.strip() for c in raw_codes.split("|") if c.strip()]
+        else:
+            expanded = []
+            for code in raw_codes:
+                code = str(code)
+                if "|" in code:
+                    expanded.extend(c.strip() for c in code.split("|") if c.strip())
+                else:
+                    expanded.append(code)
+            raw_codes = expanded
+        for code in raw_codes:
             if code not in valid_char_codes:
                 errors.append(f"Scene {i+1} has invalid character code: {code}")
-        # Check no triple characters
-        if len(scene.get("character_codes", [])) > 2:
+        # Check no triple characters (C0 doesn't count)
+        real_chars = [c for c in raw_codes if c != "C0"]
+        if len(real_chars) > 2:
             errors.append(f"Scene {i+1} has more than 2 characters")
 
-    # Check narration exists and has content
-    narration = story_data.get("narration", "")
-    word_count = len(narration.split())
+    # Check narration exists - either top-level OR per-scene
+    top_level_narration = story_data.get("narration", "")
+    per_scene_narrations = [s.get("narration", "") for s in story_data.get("scenes", [])]
+    combined_per_scene = " ".join(n for n in per_scene_narrations if n)
+
+    narration_text = top_level_narration or combined_per_scene
+    word_count = len(narration_text.split())
     if word_count < 100:
         errors.append(f"Narration too short: {word_count} words (need at least 100)")
+
+    # Title uniqueness warning (non-fatal)
+    if history_titles:
+        title = story_data.get("episode_title", "")
+        if title and not is_title_unique(title, history_titles):
+            print(f"  WARNING: Title '{title}' is similar to an existing title (will retry)")
 
     return len(errors) == 0, errors
 
@@ -470,8 +558,13 @@ def build_config(story_data: dict, episode_num: int, output_dir: str) -> dict:
     scenes = []
     scene_refs = []
     scene_narrations = []
+    # Pattern to strip leading character codes from prompt text (e.g. "C0 wide shot..." or "C1|C2 children walking...")
+    _code_prefix_re = re.compile(r'^(?:C[0-3](?:\|C[0-3])*)\s+', re.IGNORECASE)
+
     for scene in story_data["scenes"]:
-        scenes.append(scene["prompt"])
+        # Strip any leading character code prefix the LLM may have embedded in the prompt
+        prompt = _code_prefix_re.sub('', scene["prompt"])
+        scenes.append(prompt)
 
         # Extract per-scene narration
         scene_narrations.append(scene.get("narration", ""))
@@ -480,6 +573,18 @@ def build_config(story_data: dict, episode_num: int, output_dir: str) -> dict:
         char_codes = scene.get("character_codes", [])
         if isinstance(char_codes, str):
             char_codes = [c.strip() for c in char_codes.split("|") if c.strip()]
+        else:
+            # Expand pipe-joined entries inside a list (e.g. ["C1|C2"] -> ["C1", "C2"])
+            expanded = []
+            for code in char_codes:
+                if "|" in str(code):
+                    expanded.extend(c.strip() for c in code.split("|") if c.strip())
+                else:
+                    expanded.append(code)
+            char_codes = expanded
+
+        # C0 means "no characters" — normalize to empty list
+        char_codes = [c for c in char_codes if c.upper() != "C0"]
 
         scene_refs.append({
             "character_codes": char_codes,
@@ -617,14 +722,21 @@ def generate_story(
     if recent and not quiet:
         print(f"  Loaded {len(recent)} recent episodes for uniqueness check")
 
+    # Load all titles for uniqueness gate
+    all_titles = load_all_titles()
+    if all_titles and not quiet:
+        print(f"  Loaded {len(all_titles)} existing titles for uniqueness check")
+
     # Build prompt
-    prompt = build_glm_prompt(recent, theme_hint, target_minutes)
+    prompt = build_glm_prompt(recent, theme_hint, target_minutes, all_titles=all_titles)
 
     if dry_run:
         print(f"\n  [DRY RUN] Would send prompt to {model_name}:")
         print(f"  Prompt length: {len(prompt)} characters")
         print(f"  Theme hint: {theme_hint or 'auto'}")
         print(f"  Target: {target_minutes} minutes")
+        if all_titles:
+            print(f"  Avoiding {len(all_titles)} existing titles")
         return {}
 
     # Load API key (only needed for remote providers)
@@ -651,17 +763,47 @@ def generate_story(
     elif not quiet:
         print(f"  Using local LM Studio at {LOCAL_API_ENDPOINT}")
 
-    # Call API
-    story_data = call_llm_api(prompt, provider=provider, api_key=api_key)
+    # Call API with title uniqueness retry loop
+    rejected_titles = []
+    max_title_retries = 3
 
-    # Validate
-    valid, errors = validate_story(story_data)
-    if not valid:
-        print("\n  Validation errors:")
-        for err in errors:
-            print(f"    - {err}")
+    for title_attempt in range(max_title_retries):
+        # Rebuild prompt with rejected titles added to avoid list
+        if rejected_titles:
+            retry_titles = all_titles + rejected_titles
+            prompt = build_glm_prompt(recent, theme_hint, target_minutes, all_titles=retry_titles)
+
+        story_data = call_llm_api(prompt, provider=provider, api_key=api_key)
+
+        # Validate structure
+        valid, errors = validate_story(story_data, history_titles=all_titles)
+        if not valid:
+            print("\n  ERROR: Story validation failed:")
+            for err in errors:
+                print(f"    - {err}")
+            print("\n  The AI generated an invalid story structure.")
+            print("  Try running again or check the API response.")
+            sys.exit(1)
+
+        # Check title uniqueness
+        generated_title = story_data.get("episode_title", "")
+        if is_title_unique(generated_title, all_titles + rejected_titles):
+            if title_attempt > 0 and not quiet:
+                print(f"  Title accepted on attempt {title_attempt + 1}: {generated_title}")
+            return story_data
+
+        # Title is a duplicate — retry
+        rejected_titles.append(generated_title)
         if not quiet:
-            print("\n  Attempting to use story anyway...")
+            print(f"  Title '{generated_title}' too similar to existing — retrying ({title_attempt + 1}/{max_title_retries})")
+
+    # All retries exhausted — force uniqueness by appending environment name
+    generated_title = story_data.get("episode_title", "A Magical Adventure")
+    envs = story_data.get("environments", [])
+    primary_env = envs[1]["name"] if len(envs) > 1 else (envs[0]["name"] if envs else "Adventure")
+    story_data["episode_title"] = f"{generated_title} of {primary_env}"
+    if not quiet:
+        print(f"  Forced unique title: {story_data['episode_title']}")
 
     return story_data
 

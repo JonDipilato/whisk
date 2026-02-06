@@ -1132,14 +1132,16 @@ if __name__ == "__main__":
                         help="Add a guest character (guardian/trickster/lost_one/healer) who appears in Act 2")
     parser.add_argument("--use-luna-kai", action="store_true",
                         help="Use fixed Luna & Kai character traits aligned to reference images")
-    parser.add_argument("--use-glm", action="store_true",
-                        help="Use AI to generate unique stories (OpenAI by default)")
-    parser.add_argument("--openai", action="store_true", default=True,
-                        help="Use OpenAI API for AI generation (default, requires OPENAI_API_KEY)")
-    parser.add_argument("--local", action="store_true",
-                        help="Use local LM Studio for AI generation")
+    parser.add_argument("--template", action="store_true",
+                        help="Use template-based generation (random characters, hardcoded story arcs)")
+    parser.add_argument("--ai", action="store_true",
+                        help="Use AI generation with Luna & Kai (OpenAI, recommended)")
     parser.add_argument("--glm", action="store_true",
-                        help="Use Z.AI GLM API (requires GLM_API_KEY)")
+                        help="Alias for --ai (backwards compatibility)")
+    parser.add_argument("--use-glm", action="store_true",
+                        help="Alias for --ai (backwards compatibility)")
+    parser.add_argument("--local", action="store_true",
+                        help="Use local LM Studio instead of OpenAI")
     parser.add_argument("--target-minutes", type=float, default=10,
                         help="Target narration length in minutes (default: 10)")
     parser.add_argument("--output-dir", default=None,
@@ -1182,41 +1184,53 @@ if __name__ == "__main__":
         return None
 
     def _count_episodes_in_folders() -> int:
+        """Count episodes and find highest episode number from folder names."""
+        import re
         episodes_dir = Path("output") / "episodes"
-        count = 0
+        max_episode = 0
         if episodes_dir.exists():
             for entry in episodes_dir.iterdir():
                 if not entry.is_dir():
                     continue
-                if entry.name.startswith("episode_"):
-                    count += 1
-        return count
+                # Match episode_N_*, luna_kai_epN_*, grandma_epN_*, etc.
+                match = re.search(r'(?:episode_|_ep)(\d+)', entry.name)
+                if match:
+                    ep_num = int(match.group(1))
+                    max_episode = max(max_episode, ep_num)
+        return max_episode
 
     episode_num = args.episode
     if episode_num is None:
-        counter_episode = _load_episode_counter()
-        folder_count = _count_episodes_in_folders()
-        if isinstance(counter_episode, int):
-            # If the counter looks out of sync with actual episodes, trust the folder count.
-            last_episode = folder_count if folder_count > 0 and counter_episode > folder_count else counter_episode
-        else:
-            last_episode = folder_count
+        counter_episode = _load_episode_counter() or 0
+        folder_max = _count_episodes_in_folders()  # Now returns max episode number
+        # Use the higher of counter vs folder scan to avoid duplicates
+        last_episode = max(counter_episode, folder_max)
         episode_num = last_episode + 1
 
     # =========================================================================
-    # AI PATH: Use local LM Studio or remote GLM to generate unique stories
+    # GENERATION MODE SELECTION
     # =========================================================================
-    # --glm or --local automatically triggers AI generation with Luna/Kai
-    # (--use-glm and --use-luna-kai are still supported for backwards compatibility)
-    use_ai_generation = args.use_glm or args.glm or args.local
+    use_ai_generation = args.ai or args.use_glm or args.glm or args.local
+    use_template = args.template or args.profile == "grandma" or args.use_luna_kai
+
+    # Require explicit mode selection (no silent defaults)
+    if not use_ai_generation and not use_template:
+        print("\nERROR: Please specify a generation mode:")
+        print("  --ai         Use AI generation with Luna & Kai (OpenAI, recommended)")
+        print("  --local      Use local LM Studio for AI generation")
+        print("  --template   Use template-based generation (random characters)")
+        print("\nExample: python generate_episode.py --ai --target-minutes 6 --run")
+        sys.exit(1)
+
+    # =========================================================================
+    # AI PATH: Use OpenAI (or local LM Studio) to generate unique stories
+    # =========================================================================
     if use_ai_generation:
         from glm_story_generator import generate_glm_config, save_episode_counter
 
-        # Determine provider: local > glm > openai (default)
+        # Determine provider: local or openai (default)
         if args.local:
             provider = "local"
-        elif args.glm:
-            provider = "glm"
         else:
             provider = "openai"
 
@@ -1244,7 +1258,7 @@ if __name__ == "__main__":
         # Save episode counter
         save_episode_counter(episode_num)
 
-        print(f"\n  GLM Episode Generated!")
+        print(f"\n  AI Episode Generated! (using {provider.upper()})")
         print(f"  Title:      {config['title']}")
         print(f"  Characters: Luna & Kai")
         print(f"  Scenes:     {len(config['scenes'])}")
@@ -1270,8 +1284,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # =========================================================================
-    # TEMPLATE PATH: Use hardcoded templates (original behavior)
+    # TEMPLATE PATH: Use hardcoded templates (--template flag)
     # =========================================================================
+    print("\n  Using TEMPLATE mode (random characters, hardcoded story arcs)")
+    print("  For branded Luna & Kai stories, use: --glm")
+    print()
+
     generator = EpisodeGenerator(
         theme=args.theme,
         episode_num=episode_num,
